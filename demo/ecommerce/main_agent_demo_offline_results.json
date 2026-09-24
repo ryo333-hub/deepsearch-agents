@@ -1,0 +1,12 @@
+{
+  "tests": 600,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "external_connection_attempts": [],
+  "internal_socketpair_connections": 32,
+  "deepseek_requests": 0,
+  "tavily_requests": 0,
+  "external_http_requests": 0,
+  "network_policy": "HTTP and socket transports blocked; local asyncio socketpair only allowed"
+}

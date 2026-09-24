@@ -24,6 +24,7 @@ frontend/.vite/
 venv/
 env/
 .env
+.data/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -64,3 +65,17 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Local runtime, secrets and caches
+.tmp/
+.tools/
+.env.*
+!.env.example
+*.env
+!*.env.example
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.huggingface/
+*.log

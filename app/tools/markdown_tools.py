@@ -15,44 +15,61 @@ from langchain_core.tools import tool
 
 from app.api.context import get_session_context
 from app.api.monitor import monitor
-from app.utils.path_utils import resolve_path
+from app.utils.path_utils import PATH_ACCESS_DENIED_MESSAGE, resolve_path
 
 
 @tool
 def generate_markdown(
     content: Annotated[str, "要写入Markdown文档的文本内容"],
-    filename: Annotated[str, "Markdown文档的文件名（不包含扩展名或包含.md）"],
-    path: Annotated[str, "文件保存的绝对路径"] = "",
+    filename: Annotated[
+        str,
+        "当前 session 内的 Markdown 相对文件路径，例如 report.md 或 "
+        "reports/report.md；也可只传纯文件名并配合 path。禁止绝对路径和 traversal。",
+    ],
+    path: Annotated[
+        str,
+        "可选的当前 session 内相对子目录，例如 reports；不得使用绝对路径、../、..\\、盘符或 UNC 路径。",
+    ] = "",
 ):
     """
     根据提供的文本内容生成 Markdown 文件
 
     :param content: 要写入 Markdown 文档的完整文本
-    :param filename: 输出文件名，缺少 .md 后缀时会自动补全
-    :param path: 可选保存路径；通常由运行时工作目录指令约束为相对路径
+    :param filename: 当前 session 内相对文件路径，缺少 .md 后缀时会自动补全
+    :param path: 可选的当前 session 内相对子目录；使用时 filename 应为纯文件名
     :return: 文件生成结果说明
     """
     print(f"[MarkdownTool] 输入保存路径: {path or '当前会话目录'}")
     monitor.report_tool("Markdown文档生成工具", {"写入的文本内容": content})
-    if not filename.endswith(".md"):
-        filename += ".md"
-
     # session_dir 由 run_deep_agent 写入 ContextVar，保证文件写入当前会话工作目录
     session_dir = get_session_context()
     print(f"[MarkdownTool] 当前会话目录: {session_dir}")
 
-    # 先把模型传入的 path/filename 合成一个逻辑路径，再交给 resolve_path 做统一清洗
-    if path and path != ".":
-        full_input_path = str(Path(path) / filename)
-    else:
-        full_input_path = filename
-    full_path_str = resolve_path(full_input_path, session_dir)
-    file_path = Path(full_path_str)
+    try:
+        # filename 和 path 分别先过 Guard，避免在校验前做 Path/后缀变换时
+        # 意外改变 ADS、盘符或其他 Windows 特殊路径的语义。
+        safe_filename = Path(resolve_path(filename, session_dir))
+        session_path = Path(session_dir).resolve(strict=False)
+        if path and path != ".":
+            if safe_filename.parent != session_path:
+                return PATH_ACCESS_DENIED_MESSAGE
+            safe_parent = Path(resolve_path(path, session_dir))
+            output_path = safe_parent / safe_filename.name
+        else:
+            output_path = safe_filename
+
+        output_name = output_path.name
+        if not output_name.endswith(".md"):
+            output_name += ".md"
+        relative_output = output_path.with_name(output_name).relative_to(session_path)
+        file_path = Path(resolve_path(relative_output.as_posix(), session_dir))
+    except ValueError:
+        return PATH_ACCESS_DENIED_MESSAGE
 
     parent_dir = file_path.parent
 
     print(
-        f"[MarkdownTool] Debug: parent_dir={parent_dir}, filename={filename}, full_path={file_path}"
+        f"[MarkdownTool] Debug: parent_dir={parent_dir}, filename={output_name}, full_path={file_path}"
     )
 
     try:
@@ -64,10 +81,11 @@ def generate_markdown(
         file_path.write_text(content, encoding="utf-8")
 
         print(f"[MarkdownTool] 文件写入完成: {file_path}")
-        return f"Markdown文件 '{file_path}' 已成功生成并保存。"
+        logical_output_path = file_path.relative_to(session_path).as_posix()
+        return f"Markdown文件 '{logical_output_path}' 已成功生成并保存。"
     except Exception as e:
         print(f"[MarkdownTool] 文件写入失败: {e}")
-        return f"生成Markdown文件失败: {str(e)}"
+        return "生成Markdown文件失败。"
 
 
 if __name__ == "__main__":

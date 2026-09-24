@@ -8,13 +8,15 @@ import {
   FileSearchOutlined,
   ToolOutlined
 } from "@ant-design/icons";
-import { Alert, App as AntApp, Button } from "antd";
+import { Alert, App as AntApp, Button, Select } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { ChatComposer } from "./components/ChatComposer";
 import { ConversationThread } from "./components/ConversationThread";
 import type { ChatTurn } from "./components/ConversationThread";
 import { API_BASE_URL, WS_BASE_URL } from "./lib/config";
 import { useDeepAgentSession } from "./hooks/useDeepAgentSession";
+import { listKnowledgeBases } from "./lib/api";
+import type { KnowledgeBaseOption } from "./lib/api";
 import type { ConnectionState, UploadedItem } from "./types";
 
 function connectionLabel(state: ConnectionState): string {
@@ -46,6 +48,27 @@ export default function App() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const streamRef = useRef<HTMLElement | null>(null);
   const session = useDeepAgentSession();
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBaseOption[]>([]);
+  const [selectedKb, setSelectedKb] = useState<{ threadId: string; id: string } | null>(null);
+  const [kbError, setKbError] = useState("");
+  const [kbRefresh, setKbRefresh] = useState(0);
+  const knowledgeBaseId = selectedKb?.threadId === session.threadId ? selectedKb.id : undefined;
+
+  useEffect(() => {
+    let active = true;
+    setKnowledgeBases([]);
+    setSelectedKb(null);
+    setKbError("");
+    listKnowledgeBases(session.threadId).then(({ knowledge_bases }) => {
+      if (!active) return;
+      setKnowledgeBases(knowledge_bases);
+      const ready = knowledge_bases.filter((kb) => kb.index_status === "indexed");
+      if (ready.length === 1) setSelectedKb({ threadId: session.threadId, id: ready[0].knowledge_base_id });
+    }).catch((error: unknown) => {
+      if (active) setKbError(error instanceof Error ? error.message : "知识库加载失败");
+    });
+    return () => { active = false; };
+  }, [session.threadId, kbRefresh]);
 
   useEffect(() => {
     setTurns((previous) => {
@@ -92,7 +115,7 @@ export default function App() {
     setQuery("");
 
     try {
-      await session.submitTask(cleanQuery);
+      await session.submitTask(cleanQuery, knowledgeBaseId);
       message.success("任务已启动，执行过程会显示在对话中");
     } catch (error) {
       setTurns((previous) =>
@@ -159,6 +182,24 @@ export default function App() {
         </div>
 
         <div className="sidebar-status-list">
+          <label htmlFor="knowledge-base-selector">知识库</label>
+          <Select
+            id="knowledge-base-selector"
+            aria-label="知识库"
+            style={{ width: "100%" }}
+            allowClear
+            disabled={session.isRunning}
+            placeholder="当前会话暂无可用知识库"
+            value={knowledgeBaseId}
+            onChange={(id?: string) => setSelectedKb(id ? { threadId: session.threadId, id } : null)}
+            options={knowledgeBases.map((kb) => ({
+              value: kb.knowledge_base_id,
+              label: `${kb.name}（${kb.document_count} 篇）`,
+              disabled: kb.index_status !== "indexed"
+            }))}
+          />
+          <Button size="small" disabled={session.isRunning} onClick={() => setKbRefresh((n) => n + 1)}>刷新知识库</Button>
+          {kbError ? <Alert type="error" message={kbError} /> : null}
           <div className={`sidebar-status ${online ? "sidebar-status--online" : "sidebar-status--warn"}`}>
             <ApiOutlined aria-hidden />
             <span>WebSocket</span>
@@ -194,7 +235,7 @@ export default function App() {
             </li>
             <li>
               <FileSearchOutlined aria-hidden />
-              RAGFlow 助手
+              企业知识助手
             </li>
           </ul>
         </div>
@@ -230,6 +271,7 @@ export default function App() {
         <section className="chat-stream-panel" ref={streamRef}>
           <ConversationThread
             onUseExample={setQuery}
+            threadId={session.threadId}
             turns={turns}
           />
         </section>

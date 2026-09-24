@@ -9,6 +9,16 @@ export function createThreadId(): string {
 }
 
 export function getStoredThreadId(): string {
+  // An explicit prepared-Demo link selects its session; KB access still uses
+  // the backend's existing session validation. Consume once so New Session works.
+  const url = new URL(window.location.href);
+  const prepared = url.searchParams.get("thread_id");
+  if (prepared && /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(prepared)) {
+    storeThreadId(prepared);
+    url.searchParams.delete("thread_id");
+    window.history.replaceState(null, "", url);
+    return prepared;
+  }
   const existing = window.localStorage.getItem(STORAGE_KEY);
   if (existing) {
     return existing;

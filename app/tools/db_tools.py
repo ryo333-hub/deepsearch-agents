@@ -7,6 +7,7 @@ execute_sql_query 用于在确认结构后执行自定义查询。
 """
 
 import os
+import re
 
 from dotenv import load_dotenv
 from langchain_core.tools import tool
@@ -15,6 +16,199 @@ from mysql.connector import Error, connect
 from app.api.monitor import monitor
 
 load_dotenv()
+
+
+_READONLY_STATEMENTS = frozenset({"SELECT", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"})
+_TABLE_NAME_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_TABLE_EXISTS_QUERY = (
+    "SELECT 1 FROM information_schema.tables "
+    "WHERE table_schema = %s AND table_name = %s AND table_type = 'BASE TABLE' "
+    "LIMIT 1"
+)
+_STATEMENT_KEYWORDS = frozenset(
+    {
+        *_READONLY_STATEMENTS,
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "REPLACE",
+        "CREATE",
+        "ALTER",
+        "DROP",
+        "TRUNCATE",
+        "RENAME",
+        "GRANT",
+        "REVOKE",
+        "CALL",
+        "DO",
+        "SET",
+        "LOCK",
+        "UNLOCK",
+        "LOAD",
+        "ANALYZE",
+        "OPTIMIZE",
+        "REPAIR",
+    }
+)
+
+
+def _tokenize_sql(query: str) -> list[str]:
+    """提取字符串和普通注释之外的 SQL 词元，用于最小只读校验。"""
+    tokens = []
+    current = []
+    parenthesis_depth = 0
+    index = 0
+
+    def flush_current():
+        if current:
+            tokens.append("".join(current).upper())
+            current.clear()
+
+    while index < len(query):
+        char = query[index]
+
+        # MySQL 的 /*! ... */ 会执行注释体，不能作为普通注释忽略。
+        if query.startswith("/*", index):
+            flush_current()
+            if query.startswith("/*!", index):
+                raise ValueError("禁止 MySQL 可执行注释")
+            comment_end = query.find("*/", index + 2)
+            if comment_end == -1:
+                raise ValueError("SQL 包含未闭合的块注释")
+            index = comment_end + 2
+            continue
+
+        # MySQL 仅在 -- 后是空白或行尾时将其识别为行注释。
+        if query.startswith("--", index) and (
+            index + 2 == len(query) or query[index + 2].isspace()
+        ):
+            flush_current()
+            newline = query.find("\n", index + 2)
+            index = len(query) if newline == -1 else newline + 1
+            continue
+
+        if char == "#":
+            flush_current()
+            newline = query.find("\n", index + 1)
+            index = len(query) if newline == -1 else newline + 1
+            continue
+
+        # 字符串和反引号标识符中的分号、关键字不参与语句边界判断。
+        if char in {"'", '"', "`"}:
+            flush_current()
+            quote = char
+            index += 1
+            while index < len(query):
+                if query[index] == "\\":
+                    index += 2
+                    continue
+                if query[index] == quote:
+                    if index + 1 < len(query) and query[index + 1] == quote:
+                        index += 2
+                        continue
+                    index += 1
+                    break
+                index += 1
+            else:
+                raise ValueError("SQL 包含未闭合的引号")
+            continue
+
+        if char.isalnum() or char in {"_", "$"}:
+            current.append(char)
+            index += 1
+            continue
+
+        flush_current()
+        if char == ";":
+            tokens.append(char)
+        elif char == "(":
+            parenthesis_depth += 1
+            tokens.append(char)
+        elif char == ")":
+            parenthesis_depth -= 1
+            if parenthesis_depth < 0:
+                raise ValueError("SQL 括号不匹配")
+            tokens.append(char)
+        index += 1
+
+    flush_current()
+    if parenthesis_depth != 0:
+        raise ValueError("SQL 括号不匹配")
+    return tokens
+
+
+def _contains_keyword_sequence(tokens: list[str], *keywords: str) -> bool:
+    """判断 SQL 词元中是否出现连续关键字，括号不作为关键字。"""
+    words = [token for token in tokens if token not in {"(", ")", ";"}]
+    sequence_length = len(keywords)
+    return any(
+        tuple(words[index : index + sequence_length]) == keywords
+        for index in range(len(words) - sequence_length + 1)
+    )
+
+
+def _validate_readonly_query(query: str) -> None:
+    """只允许单条只读 SQL；不满足要求时抛出带简短原因的 ValueError。"""
+    if not isinstance(query, str) or not query.strip():
+        raise ValueError("SQL 不能为空")
+
+    tokens = _tokenize_sql(query)
+    if not tokens:
+        raise ValueError("SQL 不能为空")
+
+    semicolon_positions = [
+        index for index, token in enumerate(tokens) if token == ";"
+    ]
+    if len(semicolon_positions) > 1 or (
+        semicolon_positions and semicolon_positions[0] != len(tokens) - 1
+    ):
+        raise ValueError("禁止多语句")
+    if semicolon_positions:
+        tokens = tokens[:-1]
+    if not tokens:
+        raise ValueError("SQL 不能为空")
+
+    first_keyword = tokens[0]
+    if first_keyword == "WITH":
+        depth = 0
+        final_statement = None
+        for token in tokens[1:]:
+            if token == "(":
+                depth += 1
+            elif token == ")":
+                depth -= 1
+            elif depth == 0 and token in _STATEMENT_KEYWORDS:
+                final_statement = token
+                break
+        if final_statement != "SELECT":
+            raise ValueError("WITH 最终必须执行只读 SELECT")
+    elif first_keyword not in _READONLY_STATEMENTS:
+        raise ValueError(f"禁止非只读语句：{first_keyword}")
+
+    if _contains_keyword_sequence(tokens, "INTO", "OUTFILE") or _contains_keyword_sequence(
+        tokens, "INTO", "DUMPFILE"
+    ):
+        raise ValueError("禁止 INTO OUTFILE / INTO DUMPFILE")
+
+    # SELECT 的锁定读会改变并发行为，不属于本工具允许的普通只读查询。
+    if _contains_keyword_sequence(tokens, "FOR", "UPDATE") or _contains_keyword_sequence(
+        tokens, "LOCK", "IN", "SHARE", "MODE"
+    ):
+        raise ValueError("禁止锁定读取")
+
+    # 这些函数可能读取服务器文件、持有锁或造成显著阻塞，按高风险查询拒绝。
+    high_risk_functions = {"LOAD_FILE", "GET_LOCK", "RELEASE_LOCK", "SLEEP", "BENCHMARK"}
+    if high_risk_functions.intersection(tokens):
+        raise ValueError("禁止高风险 SQL 函数")
+
+
+def _validate_table_name(table_name: object) -> str:
+    """只接受当前项目需要的简单 MySQL 表标识符。"""
+    if not isinstance(table_name, str) or not _TABLE_NAME_PATTERN.fullmatch(
+        table_name
+    ):
+        raise ValueError("非法表名")
+    return table_name
 
 
 # 集中读取数据库配置，后续三个工具都复用这份连接参数
@@ -113,10 +307,16 @@ def get_table_data(table_name) -> str:
                 1,张三,18\n
                 1,张三,18\n -> 至多查询 100 条
     """
+    # 明显非法的标识符在读取配置和建立数据库连接之前直接拒绝。
+    try:
+        validated_table_name = _validate_table_name(table_name)
+    except ValueError:
+        return "拒绝执行：非法表名。"
+
     # 埋点：工具二被调用，前端可以展示当前正在预览哪张表
     monitor.report_tool(
         tool_name="数据库表数据查询工具：get_table_data",
-        args={"table_name": table_name},
+        args={"table_name": validated_table_name},
     )
 
     # 获取数据库参数
@@ -126,8 +326,16 @@ def get_table_data(table_name) -> str:
     try:
         with connect(**config) as conn:
             with conn.cursor() as cursor:
-                # 教程代码直接拼接表名，重点演示 Agent 查询链路；生产环境应改为白名单校验
-                sql = f"SELECT * FROM {table_name} LIMIT 100"
+                # 使用参数化元数据查询，只允许当前数据库中真实存在的普通表。
+                cursor.execute(
+                    _TABLE_EXISTS_QUERY,
+                    (config["database"], validated_table_name),
+                )
+                if cursor.fetchone() is None:
+                    return "表不存在或不允许访问。"
+
+                # 表名已通过严格正则和真实 BASE TABLE 白名单，此处再用反引号引用。
+                sql = f"SELECT * FROM `{validated_table_name}` LIMIT 100"
                 cursor.execute(sql)
 
                 # cursor.description 保存查询结果的列元信息
@@ -135,7 +343,7 @@ def get_table_data(table_name) -> str:
                 # 如果 SQL 没有结果集，description 可能为 None
                 description = cursor.description
                 if not description:
-                    return f"数据表 {table_name} 暂无数据。"
+                    return f"数据表 {validated_table_name} 暂无数据。"
 
                 # 只取每个列信息元组的第一个元素，也就是列名
                 # 例如：["id", "name", "age"]
@@ -155,8 +363,8 @@ def get_table_data(table_name) -> str:
                 header_str = ",".join(columns)
                 data_str = "\n".join(results)
                 return f"{header_str}\n{data_str}"
-    except Error as e:
-        return f"查询出现异常：{str(e)}"
+    except Error:
+        return "查询出现异常，请检查数据库连接或表配置。"
 
 
 @tool
@@ -177,7 +385,13 @@ def execute_sql_query(query) -> str:
                 1,张三,18\n
                 1,张三,18\n
     """
-    # 埋点：记录模型最终生成的 SQL，便于教学时观察是否真的落到了正确表字段上
+    # 先在工具层完成校验，拒绝时不读取连接配置，也不会建立 MySQL 连接。
+    try:
+        _validate_readonly_query(query)
+    except ValueError as e:
+        return f"拒绝执行：仅允许单条只读 SQL 查询。原因：{str(e)}"
+
+    # 埋点：记录通过只读校验的 SQL，便于教学时观察是否真的落到了正确表字段上
     monitor.report_tool(
         tool_name="数据库表数据查询工具：execute_sql_query", args={"query": query}
     )
@@ -190,7 +404,7 @@ def execute_sql_query(query) -> str:
     try:
         with connect(**config) as conn:
             with conn.cursor() as cursor:
-                # 当前章节依赖提示词约束模型生成只读查询；生产环境建议在工具层限制 SELECT/SHOW
+                # 到达此处的 query 已通过单语句只读白名单校验。
                 cursor.execute(query)
 
                 # 非查询类 SQL 没有结果集描述，这里统一返回提示，避免工具调用直接抛错给模型

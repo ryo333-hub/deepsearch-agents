@@ -47,9 +47,10 @@ interface FileDockProps {
   files: OutputFile[];
   onRefresh: () => void;
   sessionPath: string;
+  threadId: string;
 }
 
-export function FileDock({ files, onRefresh, sessionPath }: FileDockProps) {
+export function FileDock({ files, onRefresh, sessionPath, threadId }: FileDockProps) {
   return (
     <section className="console-panel file-panel" aria-labelledby="file-title">
       <div className="panel-heading">
@@ -91,7 +92,7 @@ export function FileDock({ files, onRefresh, sessionPath }: FileDockProps) {
                 <Button
                   aria-label={`下载 ${file.name}`}
                   className="icon-button"
-                  href={getDownloadUrl(file.path)}
+                  href={getDownloadUrl(file.path, threadId)}
                   icon={<DownloadOutlined />}
                   shape="circle"
                 />

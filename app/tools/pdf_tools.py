@@ -17,48 +17,68 @@ from langchain_core.tools import tool
 
 from app.api.context import get_session_context
 from app.api.monitor import monitor
-from app.utils.path_utils import resolve_path
+from app.utils.path_utils import PATH_ACCESS_DENIED_MESSAGE, resolve_path
 from app.utils.word_converter import convert_md_to_pdf as convert_md_to_pdf_via_word
 
 
 @tool
 def convert_md_to_pdf(
-    md_filename: Annotated[str, "要转换的Markdown文档路径（包含.md后缀）"],
+    md_filename: Annotated[
+        str,
+        "当前 session 内 Markdown 相对路径，例如 reports/report.md；禁止绝对路径、../、..\\、盘符或 UNC 路径。",
+    ],
     pdf_filename: Annotated[
-        Optional[str], "输出的PDF文件路径（可选，默认与源文件同名）"
+        Optional[str],
+        "当前 session 内 PDF 相对输出路径，例如 reports/report.pdf；可选，默认与源文件同目录同名。禁止绝对路径和 traversal。",
     ] = None,
 ) -> str:
     """
-    将当前会话目录中的 Markdown 文档转换为 PDF
+    使用当前 session 内相对路径，将 Markdown 文档转换为 PDF。
 
-    :param md_filename: Markdown 文件名或相对路径，缺少后缀时会自动补为 .md
-    :param pdf_filename: 可选 PDF 输出文件名；不传时与 Markdown 同名
+    :param md_filename: 当前 session 内 Markdown 相对路径，缺少后缀时会自动补为 .md
+    :param pdf_filename: 当前 session 内可选 PDF 相对输出路径；不传时与 Markdown 同目录同名
     :return: 转换结果说明
     """
     monitor.report_tool("Markdown转PDF工具")
 
     try:
-        # 输入路径必须先落到当前会话目录，避免模型传入任意系统路径
+        # 输入和输出分别通过同一个 session 边界，Guard 先于 exists/open/PDF 转换。
         session_dir = get_session_context()
-        md_path = Path(md_filename).with_suffix(".md")
-        md_abs_path = Path(resolve_path(str(md_path), session_dir))
 
-        if not md_abs_path.exists():
-            return f"错误：文件不存在 {md_abs_path}"
+        # 先验证未经变换的用户输入，防止 with_suffix 等操作把 ADS/特殊路径
+        # 改写成看似安全的普通文件名。
+        raw_md_abs_path = Path(resolve_path(md_filename, session_dir))
+        session_path = Path(session_dir).resolve(strict=False)
+        md_relative_path = raw_md_abs_path.relative_to(session_path).with_suffix(".md")
+        md_abs_path = Path(resolve_path(md_relative_path.as_posix(), session_dir))
 
         # 未指定 PDF 文件名时，默认与源 Markdown 同目录同名
         if pdf_filename:
-            pdf_path = Path(pdf_filename).with_suffix(".pdf")
-            pdf_abs_path = Path(resolve_path(str(pdf_path), session_dir))
+            raw_pdf_abs_path = Path(resolve_path(pdf_filename, session_dir))
+            pdf_relative_path = raw_pdf_abs_path.relative_to(session_path).with_suffix(
+                ".pdf"
+            )
         else:
-            pdf_abs_path = md_abs_path.with_suffix(".pdf")
+            pdf_relative_path = md_relative_path.with_suffix(".pdf")
+        pdf_abs_path = Path(resolve_path(pdf_relative_path.as_posix(), session_dir))
 
-        # PDF 版式、中文字体和 Markdown 解析细节都封装在底层转换模块中
-        return convert_md_to_pdf_via_word(md_abs_path, pdf_abs_path)
+        if not md_abs_path.exists():
+            return "错误：Markdown 文件不存在。"
 
+        # PDF 版式、中文字体和 Markdown 解析细节都封装在底层转换模块中。
+        # 底层只处理内部绝对路径；返回给模型时仅暴露 session-relative path。
+        conversion_result = convert_md_to_pdf_via_word(md_abs_path, pdf_abs_path)
+        if conversion_result.startswith("成功转换:") and pdf_abs_path.exists():
+            return f"成功转换: {pdf_relative_path.as_posix()}"
+        if conversion_result == "缺少依赖库，请安装 reportlab":
+            return conversion_result
+        return "转换失败：PDF 文件未生成。"
+
+    except ValueError:
+        return PATH_ACCESS_DENIED_MESSAGE
     except Exception as e:
         logging.error(f"转换失败: {e}", exc_info=True)
-        return f"转换失败: {str(e)}"
+        return "转换失败：PDF 文件未生成。"
 
 
 if __name__ == "__main__":

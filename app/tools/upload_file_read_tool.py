@@ -13,7 +13,7 @@ from langchain_core.tools import tool
 
 from app.api.context import get_session_context
 from app.api.monitor import monitor
-from app.utils.path_utils import resolve_path
+from app.utils.path_utils import PATH_ACCESS_DENIED_MESSAGE, resolve_path
 
 # 文档解析依赖按需导入：缺少某类依赖时，只影响对应文件格式，不影响工具整体注册
 try:
@@ -35,17 +35,19 @@ except ImportError:
 @tool
 def read_file_content(
     filename: Annotated[
-        str, "要读取的文件名或路径（支持 .md, .docx, .pdf, .xlsx, .xls）"
+        str,
+        "当前 session 内相对路径，例如 input.txt、uploads/data.pdf 或 "
+        "reports/report.md。禁止绝对路径、../、..\\、盘符路径和 UNC 路径。",
     ],
     instruction: Annotated[
         str, "对提取内容的具体指令（例如：'提取摘要', '统计数据'）"
     ] = "提取全部内容",
 ) -> str:
     """
-    读取当前会话目录中的指定文件内容
+    按当前 session 内相对路径读取指定文件内容。
 
     对于 Excel 文件，会自动提供数据统计信息（head 和 describe）。
-    :param filename: 文件名或相对路径，通常由主智能体从上传文件列表中选择
+    :param filename: 当前 session 内相对路径，通常从上传文件列表中选择；不得传入宿主机绝对路径或 traversal 路径
     :param instruction: 模型传入的读取意图，用于监控展示，不改变底层解析逻辑
     :return: 文件文本内容、表格摘要，或中文错误提示
     """
@@ -53,12 +55,15 @@ def read_file_content(
         "文件内容读取工具", {"filename": filename, "instruction": instruction}
     )
 
-    # 解析路径时优先约束在当前 session_dir 内，避免模型传入绝对路径导致越界读取
+    # 路径 Guard 必须先于 exists/read_text/文档解析等任何真实文件 IO。
     session_dir = get_session_context()
-    file_path = Path(resolve_path(filename, session_dir))
+    try:
+        file_path = Path(resolve_path(filename, session_dir))
+    except ValueError:
+        return PATH_ACCESS_DENIED_MESSAGE
 
     if not file_path.exists():
-        return f"错误：文件 '{filename}' 不存在 (解析路径: {file_path})。"
+        return "错误：文件不存在。"
 
     # 根据文件后缀选择解析方式；未知后缀会先按 UTF-8 文本兜底读取
     ext = file_path.suffix.lower()
@@ -89,8 +94,8 @@ def read_file_content(
 
             try:
                 df = pd.read_excel(str(file_path))
-            except Exception as e:
-                return f"读取 Excel 失败: {str(e)}"
+            except Exception:
+                return "读取 Excel 失败。"
 
             # Excel 不直接返回全量数据，先给模型列名、预览和统计摘要，避免上下文过长
             result = [
@@ -110,8 +115,8 @@ def read_file_content(
             except UnicodeDecodeError:
                 return f"错误：不支持的文件格式 '{ext}'，且无法作为文本读取。"
 
-    except Exception as e:
-        return f"读取文件出错: {str(e)}"
+    except Exception:
+        return "读取文件出错。"
 
 
 if __name__ == "__main__":

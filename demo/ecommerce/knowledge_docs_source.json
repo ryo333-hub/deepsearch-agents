@@ -1,0 +1,128 @@
+{
+  "database": "insight_ecommerce_db",
+  "user": "ecommerce_ro",
+  "period": [
+    "2026-06-01",
+    "2026-07-01"
+  ],
+  "end_exclusive": true,
+  "synthetic": true,
+  "queries": {
+    "total": "SELECT SUM(i.quantity*i.unit_price-i.discount_amount) AS gmv, SUM(i.quantity) AS units FROM orders o JOIN order_items i ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-06-01' AND o.paid_at < '2026-07-01'",
+    "categories": "SELECT p.category,SUM(i.quantity*i.unit_price-i.discount_amount) AS gmv,SUM(i.quantity) AS units FROM orders o JOIN order_items i ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-06-01' AND o.paid_at < '2026-07-01' GROUP BY p.category ORDER BY p.category",
+    "sku3": "SELECT p.product_id,p.product_name,SUM(i.quantity) AS units,SUM(i.quantity*i.unit_price-i.discount_amount) AS gmv FROM orders o JOIN order_items i ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-06-01' AND o.paid_at < '2026-07-01' AND p.product_id=3 GROUP BY p.product_id,p.product_name",
+    "top_skus": "SELECT p.product_id,p.product_name,SUM(i.quantity) AS units,SUM(i.quantity*i.unit_price-i.discount_amount) AS gmv FROM orders o JOIN order_items i ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-06-01' AND o.paid_at < '2026-07-01' GROUP BY p.product_id,p.product_name ORDER BY units DESC,p.product_id LIMIT 5",
+    "platforms": "SELECT o.platform,SUM(i.quantity*i.unit_price-i.discount_amount) AS gmv FROM orders o JOIN order_items i ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-06-01' AND o.paid_at < '2026-07-01' GROUP BY o.platform ORDER BY o.platform",
+    "ads": "SELECT platform,SUM(ad_spend) AS spend,SUM(revenue) AS revenue,\n SUM(clicks) AS clicks,SUM(impressions) AS impressions,SUM(conversions) AS conversions\n FROM ad_metrics WHERE metric_date >= '2026-06-01' AND metric_date < '2026-07-01'\n GROUP BY platform ORDER BY platform"
+  },
+  "metrics": {
+    "total": [
+      {
+        "gmv": "258641.40",
+        "units": "2243"
+      }
+    ],
+    "categories": [
+      {
+        "category": "个护",
+        "gmv": "66630.30",
+        "units": "1069"
+      },
+      {
+        "category": "家清",
+        "gmv": "66501.10",
+        "units": "360"
+      },
+      {
+        "category": "彩妆",
+        "gmv": "21313.90",
+        "units": "198"
+      },
+      {
+        "category": "护肤",
+        "gmv": "104196.10",
+        "units": "616"
+      }
+    ],
+    "sku3": [
+      {
+        "product_id": 3,
+        "product_name": "虚构演示星禾精华03",
+        "units": "600",
+        "gmv": "102870.00"
+      }
+    ],
+    "top_skus": [
+      {
+        "product_id": 3,
+        "product_name": "虚构演示星禾精华03",
+        "units": "600",
+        "gmv": "102870.00"
+      },
+      {
+        "product_id": 1,
+        "product_name": "虚构演示星禾洁面乳01",
+        "units": "480",
+        "gmv": "24278.40"
+      },
+      {
+        "product_id": 2,
+        "product_name": "虚构演示星禾面霜02",
+        "units": "480",
+        "gmv": "26587.20"
+      },
+      {
+        "product_id": 4,
+        "product_name": "虚构演示星禾口红04",
+        "units": "40",
+        "gmv": "2524.50"
+      },
+      {
+        "product_id": 33,
+        "product_name": "虚构演示星禾洗衣液33",
+        "units": "40",
+        "gmv": "6952.40"
+      }
+    ],
+    "platforms": [
+      {
+        "platform": "小红书",
+        "gmv": "87060.00"
+      },
+      {
+        "platform": "快手",
+        "gmv": "86062.30"
+      },
+      {
+        "platform": "抖音",
+        "gmv": "85519.10"
+      }
+    ],
+    "ads": [
+      {
+        "platform": "小红书",
+        "spend": "24244.20",
+        "revenue": "46688.40",
+        "clicks": "3553",
+        "impressions": "71060",
+        "conversions": "41"
+      },
+      {
+        "platform": "快手",
+        "spend": "89466.33",
+        "revenue": "44319.80",
+        "clicks": "35812",
+        "impressions": "716240",
+        "conversions": "39"
+      },
+      {
+        "platform": "抖音",
+        "spend": "12162.25",
+        "revenue": "45049.00",
+        "clicks": "1480",
+        "impressions": "29600",
+        "conversions": "40"
+      }
+    ]
+  }
+}

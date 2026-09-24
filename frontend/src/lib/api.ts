@@ -23,7 +23,18 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   return payload as T;
 }
 
-export async function startTask(query: string, threadId: string): Promise<TaskResponse> {
+export interface KnowledgeBaseOption {
+  knowledge_base_id: string;
+  name: string;
+  document_count: number;
+  index_status: string;
+}
+
+export async function listKnowledgeBases(threadId: string): Promise<{ knowledge_bases: KnowledgeBaseOption[] }> {
+  return requestJson(apiUrl(`/api/knowledge-bases?thread_id=${encodeURIComponent(threadId)}`));
+}
+
+export async function startTask(query: string, threadId: string, knowledgeBaseId?: string): Promise<TaskResponse> {
   return requestJson<TaskResponse>(apiUrl("/api/task"), {
     method: "POST",
     headers: {
@@ -31,7 +42,8 @@ export async function startTask(query: string, threadId: string): Promise<TaskRe
     },
     body: JSON.stringify({
       query,
-      thread_id: threadId
+      thread_id: threadId,
+      knowledge_base_id: knowledgeBaseId || null
     })
   });
 }
@@ -56,14 +68,19 @@ export async function uploadSessionFiles(
   });
 }
 
-export async function listSessionFiles(path: string): Promise<FileListResponse> {
+export async function listSessionFiles(
+  threadId: string,
+  path = "."
+): Promise<FileListResponse> {
   const url = new URL(apiUrl("/api/files"));
+  url.searchParams.set("thread_id", threadId);
   url.searchParams.set("path", path);
   return requestJson<FileListResponse>(url);
 }
 
-export function getDownloadUrl(path: string): string {
+export function getDownloadUrl(path: string, threadId: string): string {
   const url = new URL(apiUrl("/api/download"));
+  url.searchParams.set("thread_id", threadId);
   url.searchParams.set("path", path);
   return url.toString();
 }

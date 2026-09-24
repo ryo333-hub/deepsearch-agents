@@ -1,0 +1,400 @@
+{
+  "scenario_name": "InsightAgent synthetic ecommerce operations",
+  "data_version": "1.0.0",
+  "random_seed": 20260901,
+  "data_fingerprint": "40db65be69e4fe262d4161e77abc21c59cb6f5376571b3a01c13e6631a0ab645",
+  "synthetic_data_notice": "所有商品、品牌及平台经营数字均为虚构演示数据。平台名称不表示真实平台表现。",
+  "queries": {
+    "identity": {
+      "sql": "SELECT DATABASE() AS db, CURRENT_USER() AS account",
+      "rows": [
+        {
+          "db": "insight_ecommerce_db",
+          "account": "ecommerce_ro@%"
+        }
+      ]
+    },
+    "tables": {
+      "sql": "SHOW TABLES",
+      "rows": [
+        {
+          "Tables_in_insight_ecommerce_db": "ad_metrics"
+        },
+        {
+          "Tables_in_insight_ecommerce_db": "inventory"
+        },
+        {
+          "Tables_in_insight_ecommerce_db": "order_items"
+        },
+        {
+          "Tables_in_insight_ecommerce_db": "orders"
+        },
+        {
+          "Tables_in_insight_ecommerce_db": "products"
+        }
+      ]
+    },
+    "counts": {
+      "sql": "SELECT (SELECT COUNT(*) FROM products) AS products, (SELECT COUNT(*) FROM orders) AS orders, (SELECT COUNT(*) FROM order_items) AS order_items, (SELECT COUNT(*) FROM inventory) AS inventory, (SELECT COUNT(*) FROM ad_metrics) AS ad_metrics",
+      "rows": [
+        {
+          "products": 40,
+          "orders": 1200,
+          "order_items": 2400,
+          "inventory": 80,
+          "ad_metrics": 828
+        }
+      ]
+    },
+    "order_amount_mismatches": {
+      "sql": "SELECT COUNT(*) AS invalid_count FROM orders o\n LEFT JOIN (SELECT order_id, SUM(quantity*unit_price-discount_amount) AS amount\n            FROM order_items GROUP BY order_id) i ON i.order_id=o.order_id\n WHERE i.amount IS NULL OR o.total_amount <> i.amount",
+      "rows": [
+        {
+          "invalid_count": 0
+        }
+      ]
+    },
+    "august_gmv": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT SUM(amount) AS gmv, SUM(quantity) AS units, SUM(amount-quantity*unit_cost_snapshot) AS product_gross_profit FROM valid_items WHERE paid_at >= '2026-08-01' AND paid_at < '2026-09-01'",
+      "rows": [
+        {
+          "gmv": "922395.80",
+          "units": "6255",
+          "product_gross_profit": "487107.10"
+        }
+      ]
+    },
+    "top5_sku": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT product_id, SUM(quantity) AS units, SUM(amount) AS gmv FROM valid_items WHERE paid_at >= '2026-08-01' AND paid_at < '2026-09-01' GROUP BY product_id ORDER BY units DESC, product_id LIMIT 5",
+      "rows": [
+        {
+          "product_id": 1,
+          "units": "720",
+          "gmv": "37260.00"
+        },
+        {
+          "product_id": 2,
+          "units": "720",
+          "gmv": "38976.00"
+        },
+        {
+          "product_id": 33,
+          "units": "480",
+          "gmv": "82446.00"
+        },
+        {
+          "product_id": 34,
+          "units": "480",
+          "gmv": "84369.60"
+        },
+        {
+          "product_id": 35,
+          "units": "480",
+          "gmv": "86868.00"
+        }
+      ]
+    },
+    "A_inventory_risk": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT s.product_id, s.stock, s.safety, r.units AS recent_units,\n s.stock*30/NULLIF(r.units,0) AS coverage_days FROM stock s LEFT JOIN recent r USING(product_id)\n WHERE s.product_id IN (1,2) ORDER BY s.product_id",
+      "rows": [
+        {
+          "product_id": 1,
+          "stock": "20",
+          "safety": "100",
+          "recent_units": "684",
+          "coverage_days": "0.8772"
+        },
+        {
+          "product_id": 2,
+          "stock": "20",
+          "safety": "100",
+          "recent_units": "696",
+          "coverage_days": "0.8621"
+        }
+      ]
+    },
+    "B_inventory_backlog": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT s.product_id,s.stock,COALESCE(r.units,0) AS recent_units,\n s.stock*30/NULLIF(r.units,0) AS coverage_days,\n CASE WHEN COALESCE(r.units,0)=0 THEN 'zero_movement' ELSE 'slow_movement' END AS movement\n FROM stock s LEFT JOIN recent r USING(product_id)\n WHERE s.stock >= 1000 AND COALESCE(r.units,0) <= 5\n ORDER BY s.product_id",
+      "rows": [
+        {
+          "product_id": 5,
+          "stock": "2000",
+          "recent_units": "0",
+          "coverage_days": null,
+          "movement": "zero_movement"
+        },
+        {
+          "product_id": 6,
+          "stock": "2000",
+          "recent_units": "1",
+          "coverage_days": "60000.0000",
+          "movement": "slow_movement"
+        }
+      ]
+    },
+    "C_platform_roas": {
+      "sql": "SELECT platform, SUM(ad_spend) AS spend, SUM(revenue) AS revenue,\n SUM(revenue)/NULLIF(SUM(ad_spend),0) AS roas,\n SUM(clicks)/NULLIF(SUM(impressions),0) AS ctr,\n SUM(conversions)/NULLIF(SUM(clicks),0) AS conversion_rate\n FROM ad_metrics WHERE metric_date >= '2026-08-01' AND metric_date < '2026-09-01' GROUP BY platform ORDER BY roas DESC",
+      "rows": [
+        {
+          "platform": "抖音",
+          "spend": "5776.20",
+          "revenue": "19384.80",
+          "roas": "3.355978",
+          "ctr": "0.0500",
+          "conversion_rate": "0.0256"
+        },
+        {
+          "platform": "小红书",
+          "spend": "10701.00",
+          "revenue": "19542.00",
+          "roas": "1.826184",
+          "ctr": "0.0500",
+          "conversion_rate": "0.0113"
+        },
+        {
+          "platform": "快手",
+          "spend": "46625.00",
+          "revenue": "18303.00",
+          "roas": "0.392558",
+          "ctr": "0.0500",
+          "conversion_rate": "0.0011"
+        }
+      ]
+    },
+    "D_poor_campaign": {
+      "sql": "SELECT platform,campaign_name,SUM(ad_spend) AS spend,SUM(revenue) AS revenue,\n SUM(revenue)/NULLIF(SUM(ad_spend),0) AS roas,\n SUM(conversions)/NULLIF(SUM(clicks),0) AS conversion_rate FROM ad_metrics WHERE metric_date >= '2026-08-01' AND metric_date < '2026-09-01'\n GROUP BY platform,campaign_name HAVING spend >= 10000 AND roas < 1 AND conversion_rate < 0.02\n ORDER BY spend DESC",
+      "rows": [
+        {
+          "platform": "快手",
+          "campaign_name": "演示快手商品投放",
+          "spend": "27420.00",
+          "revenue": "16080.00",
+          "roas": "0.586433",
+          "conversion_rate": "0.0045"
+        },
+        {
+          "platform": "快手",
+          "campaign_name": "演示高花费低回报",
+          "spend": "19205.00",
+          "revenue": "2223.00",
+          "roas": "0.115751",
+          "conversion_rate": "0.0004"
+        }
+      ]
+    },
+    "E_high_margin": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT product_id,SUM(quantity) AS units,\n SUM(amount-quantity*unit_cost_snapshot)/NULLIF(SUM(amount),0) AS margin_rate\n FROM valid_items WHERE paid_at >= '2026-08-01' AND paid_at < '2026-09-01' AND product_id IN (7,8)\n GROUP BY product_id ORDER BY product_id",
+      "rows": [
+        {
+          "product_id": 7,
+          "units": "20",
+          "margin_rate": "0.932796"
+        },
+        {
+          "product_id": 8,
+          "units": "20",
+          "margin_rate": "0.934726"
+        }
+      ]
+    },
+    "F_promotion_comparison": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT\n SUM(CASE WHEN DATE(paid_at) BETWEEN '2026-08-08' AND '2026-08-14' THEN quantity ELSE 0 END) AS baseline_units,\n SUM(CASE WHEN DATE(paid_at) BETWEEN '2026-08-15' AND '2026-08-21' THEN quantity ELSE 0 END) AS promotion_units\n FROM valid_items WHERE product_id=4",
+      "rows": [
+        {
+          "baseline_units": "8",
+          "promotion_units": "135"
+        }
+      ]
+    },
+    "G_historical_sku": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT DATE_FORMAT(paid_at,'%Y-%m') AS month,SUM(quantity) AS units\n FROM valid_items WHERE product_id=3 GROUP BY month ORDER BY month",
+      "rows": [
+        {
+          "month": "2026-06",
+          "units": "600"
+        },
+        {
+          "month": "2026-07",
+          "units": "320"
+        },
+        {
+          "month": "2026-08",
+          "units": "40"
+        }
+      ]
+    },
+    "H_category_divergence": {
+      "sql": "WITH valid_items AS (\n SELECT i.*, o.paid_at, o.platform, p.category,\n        i.quantity*i.unit_price-i.discount_amount AS amount\n FROM order_items i JOIN orders o ON o.order_id=i.order_id\n JOIN products p ON p.product_id=i.product_id\n WHERE o.order_status IN ('paid','completed')\n), stock AS (\n SELECT product_id, SUM(stock_quantity) AS stock, SUM(safety_stock) AS safety\n FROM inventory GROUP BY product_id\n), recent AS (\n SELECT product_id, SUM(quantity) AS units FROM valid_items\n WHERE paid_at >= '2026-08-02' AND paid_at < '2026-09-01' GROUP BY product_id\n)\nSELECT DATE_FORMAT(paid_at,'%Y-%m') AS month,SUM(amount) AS gmv,\n SUM(CASE WHEN category='护肤' THEN amount ELSE 0 END) AS category_gmv\n FROM valid_items GROUP BY month ORDER BY month",
+      "rows": [
+        {
+          "month": "2026-06",
+          "gmv": "258641.40",
+          "category_gmv": "104196.10"
+        },
+        {
+          "month": "2026-07",
+          "gmv": "421879.80",
+          "category_gmv": "56537.70"
+        },
+        {
+          "month": "2026-08",
+          "gmv": "922395.80",
+          "category_gmv": "8193.00"
+        }
+      ]
+    }
+  },
+  "offline_features": {
+    "A": {
+      "top5": [
+        1,
+        2,
+        33,
+        34,
+        35
+      ],
+      "risk_skus": [
+        {
+          "product_id": 1,
+          "sold_units": 720,
+          "stock": 20,
+          "safety": 100,
+          "coverage_days": "0.8771929824561403508771929825"
+        },
+        {
+          "product_id": 2,
+          "sold_units": 720,
+          "stock": 20,
+          "safety": 100,
+          "coverage_days": "0.8620689655172413793103448276"
+        }
+      ]
+    },
+    "B": [
+      {
+        "product_id": 5,
+        "stock": 2000,
+        "recent_units": 0,
+        "coverage_days": null
+      },
+      {
+        "product_id": 6,
+        "stock": 2000,
+        "recent_units": 1,
+        "coverage_days": "60000"
+      }
+    ],
+    "C": {
+      "抖音": {
+        "spend": "5776.20",
+        "revenue": "19384.80",
+        "roas": "3.355977978601848966448530176"
+      },
+      "小红书": {
+        "spend": "10701.00",
+        "revenue": "19542.00",
+        "roas": "1.826184468741239136529296327"
+      },
+      "快手": {
+        "spend": "46625.00",
+        "revenue": "18303.00",
+        "roas": "0.3925576407506702412868632708"
+      }
+    },
+    "D": {
+      "spend": "19205.00",
+      "revenue": "2223.00",
+      "clicks": 31130,
+      "conversions": 13,
+      "roas": "0.1157511064826868003124186410",
+      "conversion_rate": "0.0004176035978156119498875682621"
+    },
+    "E": [
+      {
+        "product_id": 7,
+        "units": 20,
+        "margin_rate": "0.9327956989247311827956989247"
+      },
+      {
+        "product_id": 8,
+        "units": 20,
+        "margin_rate": "0.9347258485639686684073107050"
+      }
+    ],
+    "F": {
+      "baseline_units": 8,
+      "promotion_units": 135,
+      "causal_claim": false
+    },
+    "G": {
+      "product_id": 3,
+      "june_units": 600,
+      "august_units": 40
+    },
+    "H": {
+      "july_gmv": "421879.80",
+      "august_gmv": "922395.80",
+      "category": "护肤",
+      "july_category_gmv": "56537.70",
+      "august_category_gmv": "8193.00"
+    }
+  },
+  "grants": [
+    "GRANT USAGE ON *.* TO `ecommerce_ro`@`%`",
+    "GRANT SELECT ON `insight\\_ecommerce\\_db`.* TO `ecommerce_ro`@`%`"
+  ],
+  "permission_probes": {
+    "INSERT": {
+      "sql": "INSERT INTO products SELECT * FROM products WHERE 1=0",
+      "mysql_errno": 1142,
+      "denied": true
+    },
+    "UPDATE": {
+      "sql": "UPDATE products SET product_name=product_name WHERE 1=0",
+      "mysql_errno": 1142,
+      "denied": true
+    },
+    "DELETE": {
+      "sql": "DELETE FROM products WHERE 1=0",
+      "mysql_errno": 1142,
+      "denied": true
+    }
+  },
+  "persisted_rows_equal_generated_data": true,
+  "unchanged_after_permission_probes": true,
+  "attribution_count": 360,
+  "attribution_reconciled_against_persisted_rows": true,
+  "management_checks": {
+    "old_database_rows_and_fingerprints_unchanged": true,
+    "old_deepsearch_ro_grants_unchanged": true,
+    "old_counts": {
+      "drugs": 50,
+      "inventory": 150,
+      "sales_records": 100
+    },
+    "repeat_seed_rejected": "Demo data/schema already exists. No overwrite or reset is allowed.",
+    "mysql_healthy": true,
+    "container_not_restarted": true
+  },
+  "test_summary": {
+    "offline_baseline": 446,
+    "new_ecommerce_offline": 31,
+    "offline_total": 477,
+    "offline_failures": 0,
+    "offline_errors": 0,
+    "offline_skipped": 0,
+    "legacy_integration_passed": 2,
+    "new_ecommerce_integration_passed": 1,
+    "external_requests": 0,
+    "offline_internal_socketpairs": 16,
+    "warning": "Existing LangChain allowed_objects default deprecation warning"
+  },
+  "import_note": "Initial MySQL 3813 on ad_metrics cross-column CHECK corrected to table-level CHECK. Verified four new tables empty, resumed missing DDL and inserted data. No DROP, ALTER, reset or container restart.",
+  "application_default": {
+    "host": "localhost",
+    "port": 3307,
+    "user": "deepsearch_ro",
+    "database": "deepsearch_db",
+    "env_modified": false
+  }
+}

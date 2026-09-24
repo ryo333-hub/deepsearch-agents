@@ -27,8 +27,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from app.agent.main_agent import run_deep_agent
+from app.agent.main_agent import run_deep_agent, validate_selected_knowledge_base
 from app.api.monitor import manager
+from app.local_rag.storage import KNOWLEDGE_BASE_ACCESS_ERROR, KnowledgeBaseAccessError
+from app.local_rag.storage import LocalRAGStorage
+from app.api.context import set_thread_context, reset_thread_context
+from app.utils.path_utils import (
+    INVALID_THREAD_ID_MESSAGE,
+    INVALID_UPLOAD_FILENAME_MESSAGE,
+    PATH_ACCESS_DENIED_MESSAGE,
+    resolve_path,
+    resolve_session_directory,
+    validate_thread_id,
+    validate_upload_filename,
+)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -75,7 +87,16 @@ class TaskRequest(BaseModel):
     """前端启动任务时提交的请求体。"""
 
     query: str
-    thread_id: str = None
+    thread_id: str | None = None
+    knowledge_base_id: str | None = None
+
+
+def _validate_thread_id_for_api(thread_id: object) -> str:
+    """Translate internal validation failures into a stable HTTP 400 response."""
+    try:
+        return validate_thread_id(thread_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=INVALID_THREAD_ID_MESSAGE) from exc
 
 
 def _forget_task(thread_id: str, task: asyncio.Task) -> None:
@@ -89,6 +110,18 @@ def _forget_task(thread_id: str, task: asyncio.Task) -> None:
         active_tasks.pop(thread_id, None)
 
 
+@app.get("/api/knowledge-bases")
+async def list_knowledge_bases(thread_id: str):
+    """List only knowledge bases owned by the requested session; no writes."""
+    thread_id = _validate_thread_id_for_api(thread_id)
+    token = set_thread_context(thread_id)
+    try:
+        return {"knowledge_bases": [kb.model_dump(mode="json")
+                                    for kb in LocalRAGStorage().list_knowledge_bases()]}
+    finally:
+        reset_thread_context(token)
+
+
 @app.post("/api/task")
 async def run_task(request: TaskRequest):
     """
@@ -97,7 +130,16 @@ async def run_task(request: TaskRequest):
     HTTP 请求只负责创建后台协程并立即返回，后续执行轨迹、子智能体调用和最终
     答案都会由 monitor 通过 `/ws/{thread_id}` 推送给同一会话的前端。
     """
-    thread_id = request.thread_id or str(uuid.uuid4())
+    thread_id = (
+        str(uuid.uuid4())
+        if request.thread_id is None
+        else _validate_thread_id_for_api(request.thread_id)
+    )
+    if request.knowledge_base_id is not None:
+        try:
+            validate_selected_knowledge_base(thread_id, request.knowledge_base_id)
+        except KnowledgeBaseAccessError as exc:
+            raise HTTPException(status_code=400, detail=KNOWLEDGE_BASE_ACCESS_ERROR) from exc
 
     # 同一个 thread_id 只保留一个活跃任务，新任务会先取消旧任务，避免并发写同一会话目录
     old_task = active_tasks.get(thread_id)
@@ -105,7 +147,12 @@ async def run_task(request: TaskRequest):
         old_task.cancel()
 
     # create_task 把长耗时 Agent 执行交给事件循环，接口本身不用等待最终结果
-    task = asyncio.create_task(run_deep_agent(request.query, thread_id))
+    if request.knowledge_base_id is None:
+        task = asyncio.create_task(run_deep_agent(request.query, thread_id))
+    else:
+        task = asyncio.create_task(run_deep_agent(
+            request.query, thread_id, knowledge_base_id=request.knowledge_base_id,
+        ))
     active_tasks[thread_id] = task
     task.add_done_callback(lambda finished_task: _forget_task(thread_id, finished_task))
 
@@ -120,6 +167,7 @@ async def cancel_task(thread_id: str):
     注意：取消会向 asyncio.Task 注入 CancelledError。若底层第三方工具正在执行不可中断
     的同步阻塞调用，任务可能需要等该调用返回后才会真正结束。
     """
+    thread_id = _validate_thread_id_for_api(thread_id)
     task = active_tasks.get(thread_id)
     if not task or task.done():
         active_tasks.pop(thread_id, None)
@@ -156,44 +204,50 @@ async def upload_files(files: List[UploadFile] = File(...), thread_id: str = For
         files (List[UploadFile]): 文件对象列表。
         thread_id (str): 关联的任务会话 ID。
     """
-    # 上传文件先按会话隔离保存，避免不同任务读取到彼此的附件
-    target_dir = updated_dir / f"session_{thread_id}"
+    safe_thread_id = _validate_thread_id_for_api(thread_id)
+    try:
+        safe_names = [validate_upload_filename(file.filename) for file in files]
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail=INVALID_UPLOAD_FILENAME_MESSAGE
+        ) from exc
+
+    # 所有不可信参数先完成验证，再进行 mkdir/open/copy 等真实文件 IO。
+    target_dir = resolve_session_directory(updated_dir, safe_thread_id)
     target_dir.mkdir(parents=True, exist_ok=True)
 
     saved_files = []
-    for file in files:
-        file_path = target_dir / file.filename
+    for file, safe_name in zip(files, safe_names, strict=True):
+        file_path = Path(resolve_path(safe_name, target_dir))
         # 直接复制文件流，避免大文件一次性读入内存
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        saved_files.append(file.filename)
+        saved_files.append(safe_name)
 
     return {"status": "uploaded", "files": saved_files}
 
 
 @app.get("/api/download")
-async def download_file(path: str):
+async def download_file(thread_id: str, path: str):
     """
     文件下载接口 (File Download)。
 
     目标：
-    1. 根据绝对路径下载文件。
+    1. 根据当前会话内的相对路径下载文件。
     2. 严格的安全检查，防止越权访问。
 
     Args:
-        path (str): 文件的绝对路径 (通常从 list_files 接口获取)。
+        thread_id (str): 当前会话 ID。
+        path (str): 相对于当前会话目录的文件路径。
     """
+    safe_thread_id = _validate_thread_id_for_api(thread_id)
     try:
-        # resolve 后再做 is_relative_to，防止 `../` 之类的路径穿越到 output 之外
-        abs_path = Path(path).resolve()
-        output_abs = output_dir.resolve()
+        session_dir = resolve_session_directory(output_dir, safe_thread_id)
+        abs_path = Path(resolve_path(path, session_dir))
+    except ValueError:
+        return {"error": PATH_ACCESS_DENIED_MESSAGE}
 
-        if not abs_path.is_relative_to(output_abs):
-            return {"error": "拒绝访问: 只能下载输出目录下的文件"}
-    except Exception:
-        return {"error": "无效的路径参数"}
-
-    if not abs_path.exists():
+    if not abs_path.is_file():
         return {"error": "文件不存在"}
 
     # FileResponse 会以流式响应返回文件内容，并让浏览器使用原文件名下载
@@ -201,7 +255,7 @@ async def download_file(path: str):
 
 
 @app.get("/api/files")
-async def list_files(path: str):
+async def list_files(thread_id: str, path: str = "."):
     """
     文件列表查询接口 (File Explorer)。
 
@@ -211,49 +265,67 @@ async def list_files(path: str):
     3. 严格的安全检查，防止路径遍历攻击。
 
     Args:
-        path (str): 目标目录的绝对路径 (必须在 output 目录下)。
+        thread_id (str): 当前会话 ID。
+        path (str): 当前会话目录内的相对目录，默认列出会话根目录。
     """
-    print(f"[DEBUG] 请求文件列表: {path}")
-
+    safe_thread_id = _validate_thread_id_for_api(thread_id)
     try:
-        # 和下载接口保持同一条安全边界：前端只能查看 output 目录内部内容
-        abs_path = Path(path).resolve()
-        output_abs = output_dir.resolve()
+        session_dir = resolve_session_directory(output_dir, safe_thread_id)
+        abs_path = Path(resolve_path(path, session_dir))
+    except ValueError:
+        return {"error": PATH_ACCESS_DENIED_MESSAGE}
 
-        if not abs_path.is_relative_to(output_abs):
-            print(f"[ERROR] 拒绝访问: {abs_path} 不在 {output_abs} 目录下")
-            return {"error": "拒绝访问: 只能访问输出目录下的文件"}
-
-    except Exception as e:
-        print(f"[ERROR] 路径解析失败: {e}")
-        return {"error": f"路径无效: {e}"}
-
-    if not abs_path.exists():
+    if not abs_path.is_dir():
         return {"error": "目录不存在"}
 
     files = []
     try:
-        # 递归返回文件元数据，前端据此渲染文件列表并发起下载请求
-        for file_path in abs_path.rglob("*"):
-            if file_path.is_file():
-                stat = file_path.stat()
+        # walk 明确禁止跟随目录 symlink/junction；每个候选目录和文件仍再次经过
+        # resolve_path，避免先枚举到会话外部后才做 containment 检查。
+        for current_root, directory_names, file_names in abs_path.walk(
+            top_down=True,
+            follow_symlinks=False,
+        ):
+            allowed_directories = []
+            for directory_name in directory_names:
+                relative_directory = (
+                    current_root / directory_name
+                ).relative_to(session_dir).as_posix()
+                try:
+                    Path(resolve_path(relative_directory, session_dir))
+                except ValueError:
+                    continue
+                allowed_directories.append(directory_name)
+            directory_names[:] = allowed_directories
+
+            for file_name in file_names:
+                relative_candidate = (
+                    current_root / file_name
+                ).relative_to(session_dir).as_posix()
+                try:
+                    safe_file_path = Path(
+                        resolve_path(relative_candidate, session_dir)
+                    )
+                except ValueError:
+                    continue
+                if not safe_file_path.is_file():
+                    continue
+                stat = safe_file_path.stat()
                 files.append(
                     {
-                        "name": file_path.name,
+                        "name": safe_file_path.name,
                         "type": "file",
-                        "path": str(file_path),
+                        "path": safe_file_path.relative_to(session_dir).as_posix(),
                         "size": stat.st_size,
                         "mtime": stat.st_mtime,
                     }
                 )
 
-    except Exception as e:
-        print(f"[ERROR] 遍历文件失败: {e}")
-        return {"error": str(e)}
+    except Exception:
+        return {"error": "文件列表读取失败"}
 
     # 最新生成的文件排在前面，方便用户优先看到本次任务产物
     files.sort(key=lambda x: x.get("mtime", 0), reverse=True)
-    print(f"[DEBUG] 找到 {len(files)} 个文件")
     return {"files": files}
 
 
@@ -266,6 +338,12 @@ async def websocket_endpoint(websocket: WebSocket, thread_id: str):
     发送事件时只需要按 thread_id 查找连接，就能把进度推给对应页面。循环中的
     receive_text 用于接收前端心跳，避免连接空闲断开。
     """
+    try:
+        thread_id = validate_thread_id(thread_id)
+    except ValueError:
+        await websocket.close(code=1008, reason=INVALID_THREAD_ID_MESSAGE)
+        return
+
     print(f"会话向我们发起了请求，要求建立连接：{thread_id} 对应：{websocket}")
 
     # 连接建立后立即按 thread_id 注册，monitor 后续才能把事件定向推给当前页面

@@ -1,0 +1,1417 @@
+{
+  "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+  "kb_name": "ecommerce-business-kb",
+  "session_id": "ecommerce-knowledge-phase-c",
+  "temporary_fixture": true,
+  "model": "intfloat/multilingual-e5-small",
+  "model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "dimension": 384,
+  "index": "persisted NumPy exact vector index; normalized inner product",
+  "chunk_count": 44,
+  "document_count": 4,
+  "identity": {
+    "db": "insight_ecommerce_db",
+    "account": "ecommerce_ro@%"
+  },
+  "documents_verified_against_live_june_sql": true,
+  "searches": [
+    {
+      "query": "公司的库存缺货风险是怎么定义的？",
+      "top_k": 5,
+      "expected_document": "02_库存经营SOP.md",
+      "matched_citations": [
+        {
+          "page": null,
+          "start_line": 14,
+          "end_line": 14,
+          "heading": "库存经营SOP > 缺货风险判定",
+          "source_block_index": 3,
+          "start_char": 0,
+          "end_char": 139,
+          "citation_id": "C1",
+          "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+          "document_name": "02_库存经营SOP.md",
+          "chunk_id": "chunk_c51629888818415a9b600956471d8aa6",
+          "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+          "score": 0.8974515470256996,
+          "score_type": "inner_product"
+        }
+      ],
+      "evidence": [
+        {
+          "text": "根据企业库存 SOP，当前库存 < safety_stock，或者库存覆盖天数 < 7 天，标记为高缺货风险。先在同一 SKU、同一仓库口径比较；跨仓汇总时库存与 safety_stock 都必须求和。需复核可售库存、在途到货和补货周期后安排补货，不能仅凭汇总结果立即下采购单。",
+          "citation": {
+            "page": null,
+            "start_line": 14,
+            "end_line": 14,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 3,
+            "start_char": 0,
+            "end_char": 139,
+            "citation_id": "C1",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c51629888818415a9b600956471d8aa6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8974515470256996,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 缺货风险判定",
+          "citation": {
+            "page": null,
+            "start_line": 12,
+            "end_line": 12,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 2,
+            "start_char": 0,
+            "end_char": 9,
+            "citation_id": "C2",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_632a1fed73814e6aa53b67e4f638bb43",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8833567797740632,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "月报未获得六月末库存快照，因此不作当时缺货或积压的数值结论。建议后续核对库存快照日期、近月销量与补货周期；优先关注核心 SKU，但不能依据历史销量直接断言当前库存风险。",
+          "citation": {
+            "page": null,
+            "start_line": 45,
+            "end_line": 45,
+            "heading": "经营分析月报 > 库存关注与月报建议",
+            "source_block_index": 13,
+            "start_char": 0,
+            "end_char": 84,
+            "citation_id": "C3",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5473d789366e4abcb9e6a0da84e7edd4",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8788067157364322,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "根据企业库存 SOP，库存覆盖天数 > 90 天，标记为库存积压关注。核查商品动销、效期、仓间分布和近期需求，再评估减少补货、调拨或受控促销；不要无条件打折清仓。",
+          "citation": {
+            "page": null,
+            "start_line": 22,
+            "end_line": 22,
+            "heading": "库存经营SOP > 库存积压处理",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 81,
+            "citation_id": "C4",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_44d6269075a64a1da3ff7a230dbda0b0",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8703778550019308,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 9,
+            "start_char": 0,
+            "end_char": 112,
+            "citation_id": "C5",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_cdf9ee1041b04f9db6a035052b324c52",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8669199346688061,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "query": "SKU 3 在 6 月表现如何？",
+      "top_k": 5,
+      "expected_document": "01_经营分析月报.md",
+      "matched_citations": [
+        {
+          "page": null,
+          "start_line": 27,
+          "end_line": 27,
+          "heading": "经营分析月报 > SKU 3 六月历史判断",
+          "source_block_index": 7,
+          "start_char": 0,
+          "end_char": 124,
+          "citation_id": "C1",
+          "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+          "document_name": "01_经营分析月报.md",
+          "chunk_id": "chunk_ed309a2031c14be5894abc8a1367c089",
+          "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+          "score": 0.9088779951545429,
+          "score_type": "inner_product"
+        }
+      ],
+      "evidence": [
+        {
+          "text": "SKU 3 在 2026 年 6 月的有效销量为 600 件，成交金额为 102870.00 元。商品名称为虚构演示星禾精华03。SKU 3 在 6 月属于重点销售商品之一。本历史判断只描述六月，不保证未来月份维持相同表现；后续应按同口径重新查询。",
+          "citation": {
+            "page": null,
+            "start_line": 27,
+            "end_line": 27,
+            "heading": "经营分析月报 > SKU 3 六月历史判断",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 124,
+            "citation_id": "C1",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_ed309a2031c14be5894abc8a1367c089",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9088779951545429,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## SKU 3 六月历史判断",
+          "citation": {
+            "page": null,
+            "start_line": 25,
+            "end_line": 25,
+            "heading": "经营分析月报 > SKU 3 六月历史判断",
+            "source_block_index": 6,
+            "start_char": 0,
+            "end_char": 15,
+            "citation_id": "C2",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_797f6bda2cbd452e9f24b9bdb47b82d8",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9012833214061983,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "月报未获得六月末库存快照，因此不作当时缺货或积压的数值结论。建议后续核对库存快照日期、近月销量与补货周期；优先关注核心 SKU，但不能依据历史销量直接断言当前库存风险。",
+          "citation": {
+            "page": null,
+            "start_line": 45,
+            "end_line": 45,
+            "heading": "经营分析月报 > 库存关注与月报建议",
+            "source_block_index": 13,
+            "start_char": 0,
+            "end_char": 84,
+            "citation_id": "C3",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5473d789366e4abcb9e6a0da84e7edd4",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8937944399985364,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 六月核心 SKU（按有效销量排序）",
+          "citation": {
+            "page": null,
+            "start_line": 29,
+            "end_line": 29,
+            "heading": "经营分析月报 > 六月核心 SKU（按有效销量排序）",
+            "source_block_index": 8,
+            "start_char": 0,
+            "end_char": 20,
+            "citation_id": "C4",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5d2bbcae059d42c1b6d194fee0f8088e",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8880872266173951,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 六月各品类表现",
+          "citation": {
+            "page": null,
+            "start_line": 16,
+            "end_line": 16,
+            "heading": "经营分析月报 > 六月各品类表现",
+            "source_block_index": 4,
+            "start_char": 0,
+            "end_char": 10,
+            "citation_id": "C5",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_3309daf187ab4a16a4e6cbc4cd9e3b48",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.878480163292916,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "query": "库存超过 90 天怎么处理？",
+      "top_k": 5,
+      "expected_document": "02_库存经营SOP.md",
+      "matched_citations": [
+        {
+          "page": null,
+          "start_line": 22,
+          "end_line": 22,
+          "heading": "库存经营SOP > 库存积压处理",
+          "source_block_index": 7,
+          "start_char": 0,
+          "end_char": 81,
+          "citation_id": "C1",
+          "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+          "document_name": "02_库存经营SOP.md",
+          "chunk_id": "chunk_44d6269075a64a1da3ff7a230dbda0b0",
+          "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+          "score": 0.9164578137222605,
+          "score_type": "inner_product"
+        }
+      ],
+      "evidence": [
+        {
+          "text": "根据企业库存 SOP，库存覆盖天数 > 90 天，标记为库存积压关注。核查商品动销、效期、仓间分布和近期需求，再评估减少补货、调拨或受控促销；不要无条件打折清仓。",
+          "citation": {
+            "page": null,
+            "start_line": 22,
+            "end_line": 22,
+            "heading": "库存经营SOP > 库存积压处理",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 81,
+            "citation_id": "C1",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_44d6269075a64a1da3ff7a230dbda0b0",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9164578137222605,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 9,
+            "start_char": 0,
+            "end_char": 112,
+            "citation_id": "C2",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_cdf9ee1041b04f9db6a035052b324c52",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8946820560183653,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "根据企业库存 SOP，当前库存 < safety_stock，或者库存覆盖天数 < 7 天，标记为高缺货风险。先在同一 SKU、同一仓库口径比较；跨仓汇总时库存与 safety_stock 都必须求和。需复核可售库存、在途到货和补货周期后安排补货，不能仅凭汇总结果立即下采购单。",
+          "citation": {
+            "page": null,
+            "start_line": 14,
+            "end_line": 14,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 3,
+            "start_char": 0,
+            "end_char": 139,
+            "citation_id": "C3",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c51629888818415a9b600956471d8aa6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8837985296566369,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "库存覆盖天数＝当前可售库存÷最近 30 天日均有效销量。对于 2026-09-01 快照，最近 30 天指 2026-08-02 至 2026-08-31，仅计算已付款或已完成订单。覆盖天数在 7～30 天属于正常关注；超过 30 天且不超过 90 天时持续监测，不自动判为积压。",
+          "citation": {
+            "page": null,
+            "start_line": 18,
+            "end_line": 18,
+            "heading": "库存经营SOP > 库存覆盖与正常关注",
+            "source_block_index": 5,
+            "start_char": 0,
+            "end_char": 140,
+            "citation_id": "C4",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c2c28f97f34447b7a48134aefffe1ed6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8835800786694905,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 库存积压处理",
+          "citation": {
+            "page": null,
+            "start_line": 20,
+            "end_line": 20,
+            "heading": "库存经营SOP > 库存积压处理",
+            "source_block_index": 6,
+            "start_char": 0,
+            "end_char": 9,
+            "citation_id": "C5",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_773fa2733d7b4735b836ba00d561a929",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8823189433508042,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "query": "历史上哪个渠道广告效率存在问题？",
+      "top_k": 5,
+      "expected_document": "03_广告投放复盘.md",
+      "matched_citations": [
+        {
+          "page": null,
+          "start_line": 26,
+          "end_line": 26,
+          "heading": "广告投放复盘 > 历史广告效率问题与后续观察",
+          "source_block_index": 7,
+          "start_char": 0,
+          "end_char": 131,
+          "citation_id": "C3",
+          "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+          "document_name": "03_广告投放复盘.md",
+          "chunk_id": "chunk_51989b5d13cf422893d8e07575cd58a3",
+          "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+          "score": 0.8595973589411514,
+          "score_type": "inner_product"
+        }
+      ],
+      "evidence": [
+        {
+          "text": "## 历史广告效率问题与后续观察",
+          "citation": {
+            "page": null,
+            "start_line": 24,
+            "end_line": 24,
+            "heading": "广告投放复盘 > 历史广告效率问题与后续观察",
+            "source_block_index": 6,
+            "start_char": 0,
+            "end_char": 16,
+            "citation_id": "C1",
+            "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+            "document_name": "03_广告投放复盘.md",
+            "chunk_id": "chunk_8eb6e906500642b2a49be905fa40de10",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8760735056784376,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "文档名称：广告投放复盘\n文档类型：历史广告复盘\n文档版本：v1.0\n成文日期：2026-07-06\n数据覆盖期间：2026-06-01 ～ 2026-06-30\n适用范围：虚构演示三渠道归因广告数据\n数据性质：本文档为项目演示使用的合成企业资料，不代表真实企业经营数据。\n金额单位：人民币元；时间口径：Asia/Shanghai。",
+          "citation": {
+            "page": null,
+            "start_line": 3,
+            "end_line": 10,
+            "heading": "广告投放复盘",
+            "source_block_index": 1,
+            "start_char": 0,
+            "end_char": 165,
+            "citation_id": "C2",
+            "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+            "document_name": "03_广告投放复盘.md",
+            "chunk_id": "chunk_f0edf03d8539422ea954df1e21026376",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8674466798503513,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "按六月实际合成数据，快手渠道的汇总 ROAS 最低，为 0.4954。历史上该渠道部分活动存在投放效率偏低问题，建议复核人群、素材和归因口径。其他渠道也需按后续月份重新评估，不以六月结论直接决定未来预算。平台名称仅用于合成 Demo，不能解读为真实平台优劣比较。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "广告投放复盘 > 历史广告效率问题与后续观察",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 131,
+            "citation_id": "C3",
+            "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+            "document_name": "03_广告投放复盘.md",
+            "chunk_id": "chunk_51989b5d13cf422893d8e07575cd58a3",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8595973589411514,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "| 渠道 | 花费（元） | 归因收入（元） | ROAS | CTR | 广告转化率 |\n|---|---:|---:|---:|---:|---:|\n| 小红书 | 24244.20 | 46688.40 | 1.9258 | 5.0000% | 1.1540% |\n| 快手 | 89466.33 | 44319.80 | 0.4954 | 5.0000% | 0.1089% |\n| 抖音 | 12162.25 | 45049.00 | 3.7040 | 5.0000% | 2.7027% |",
+          "citation": {
+            "page": null,
+            "start_line": 18,
+            "end_line": 22,
+            "heading": "广告投放复盘 > 六月各渠道投放表现",
+            "source_block_index": 5,
+            "start_char": 0,
+            "end_char": 251,
+            "citation_id": "C4",
+            "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+            "document_name": "03_广告投放复盘.md",
+            "chunk_id": "chunk_b78f876f881c41b8afb19be9981ae355",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.858523919695487,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "# 广告投放复盘",
+          "citation": {
+            "page": null,
+            "start_line": 1,
+            "end_line": 1,
+            "heading": "广告投放复盘",
+            "source_block_index": 0,
+            "start_char": 0,
+            "end_char": 8,
+            "citation_id": "C5",
+            "document_id": "doc_045504097f154a779cc43e69e5a94a28",
+            "document_name": "03_广告投放复盘.md",
+            "chunk_id": "chunk_c9d1fa3915b64ab99810e8dc029dfa69",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8499240644116766,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "query": "促销销量上涨是否能直接证明促销有效？",
+      "top_k": 5,
+      "expected_document": "04_促销策略.md",
+      "matched_citations": [
+        {
+          "page": null,
+          "start_line": 22,
+          "end_line": 22,
+          "heading": "促销策略 > 促销效果与因果边界",
+          "source_block_index": 7,
+          "start_char": 0,
+          "end_char": 107,
+          "citation_id": "C1",
+          "document_id": "doc_167411716dfc42f68479fb09216bffb6",
+          "document_name": "04_促销策略.md",
+          "chunk_id": "chunk_6718244ba48b4337b25b1fd0da9911e9",
+          "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+          "score": 0.9216890801226678,
+          "score_type": "inner_product"
+        }
+      ],
+      "evidence": [
+        {
+          "text": "促销期间销量上涨只能作为经营观察，不能仅凭前后变化断言因果。不能只凭前后销量差异就声称促销导致销量增长，或证明促销有效。活动评估需结合同期趋势、渠道投放、库存、商品曝光和其他促销因素；条件不足时明确存在未验证因素。",
+          "citation": {
+            "page": null,
+            "start_line": 22,
+            "end_line": 22,
+            "heading": "促销策略 > 促销效果与因果边界",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 107,
+            "citation_id": "C1",
+            "document_id": "doc_167411716dfc42f68479fb09216bffb6",
+            "document_name": "04_促销策略.md",
+            "chunk_id": "chunk_6718244ba48b4337b25b1fd0da9911e9",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9216890801226678,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 促销效果与因果边界",
+          "citation": {
+            "page": null,
+            "start_line": 20,
+            "end_line": 20,
+            "heading": "促销策略 > 促销效果与因果边界",
+            "source_block_index": 6,
+            "start_char": 0,
+            "end_char": 12,
+            "citation_id": "C2",
+            "document_id": "doc_167411716dfc42f68479fb09216bffb6",
+            "document_name": "04_促销策略.md",
+            "chunk_id": "chunk_32e26dd432184ef1bb60e2db479b8be1",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8817147572130382,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "文档名称：促销策略\n文档类型：内部活动评估规则\n文档版本：v1.0\n成文日期：2026-08-01\n数据覆盖期间：计划窗口：2026-08-15 ～ 2026-08-21；基线：2026-08-08 ～ 2026-08-14\n适用范围：虚构演示企业促销与商品毛利管理\n数据性质：本文档为项目演示使用的合成企业资料，不代表真实企业经营数据。\n金额单位：人民币元；时间口径：Asia/Shanghai。",
+          "citation": {
+            "page": null,
+            "start_line": 3,
+            "end_line": 10,
+            "heading": "促销策略",
+            "source_block_index": 1,
+            "start_char": 0,
+            "end_char": 199,
+            "citation_id": "C3",
+            "document_id": "doc_167411716dfc42f68479fb09216bffb6",
+            "document_name": "04_促销策略.md",
+            "chunk_id": "chunk_35906fa5082647cd998ea6201a94b971",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8780995846306515,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "# 促销策略",
+          "citation": {
+            "page": null,
+            "start_line": 1,
+            "end_line": 1,
+            "heading": "促销策略",
+            "source_block_index": 0,
+            "start_char": 0,
+            "end_char": 6,
+            "citation_id": "C4",
+            "document_id": "doc_167411716dfc42f68479fb09216bffb6",
+            "document_name": "04_促销策略.md",
+            "chunk_id": "chunk_d0924461458f4f968f84f864913aa3ae",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8756097650113979,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 9,
+            "start_char": 0,
+            "end_char": 112,
+            "citation_id": "C5",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_cdf9ee1041b04f9db6a035052b324c52",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8755635965683772,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ]
+    }
+  ],
+  "cases": {
+    "A": {
+      "question": "分析 2026 年 8 月销量最高的商品，并根据公司的库存 SOP 判断 9 月 1 日是否存在缺货风险。",
+      "db_rows": [
+        {
+          "product_id": "1",
+          "august_units": "720",
+          "stock": "20",
+          "safety_stock": "100",
+          "recent_units": "684",
+          "coverage_days": "0.8772"
+        },
+        {
+          "product_id": "2",
+          "august_units": "720",
+          "stock": "20",
+          "safety_stock": "100",
+          "recent_units": "696",
+          "coverage_days": "0.8621"
+        },
+        {
+          "product_id": "33",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "456",
+          "coverage_days": "13.1579"
+        },
+        {
+          "product_id": "34",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "468",
+          "coverage_days": "12.8205"
+        },
+        {
+          "product_id": "35",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "468",
+          "coverage_days": "12.8205"
+        }
+      ],
+      "sql": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n ORDER BY august_units DESC,s.product_id LIMIT 5;",
+      "evidence": [
+        {
+          "text": "根据企业库存 SOP，当前库存 < safety_stock，或者库存覆盖天数 < 7 天，标记为高缺货风险。先在同一 SKU、同一仓库口径比较；跨仓汇总时库存与 safety_stock 都必须求和。需复核可售库存、在途到货和补货周期后安排补货，不能仅凭汇总结果立即下采购单。",
+          "citation": {
+            "page": null,
+            "start_line": 14,
+            "end_line": 14,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 3,
+            "start_char": 0,
+            "end_char": 139,
+            "citation_id": "C1",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c51629888818415a9b600956471d8aa6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8974515470256996,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 缺货风险判定",
+          "citation": {
+            "page": null,
+            "start_line": 12,
+            "end_line": 12,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 2,
+            "start_char": 0,
+            "end_char": 9,
+            "citation_id": "C2",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_632a1fed73814e6aa53b67e4f638bb43",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8833567797740632,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "月报未获得六月末库存快照，因此不作当时缺货或积压的数值结论。建议后续核对库存快照日期、近月销量与补货周期；优先关注核心 SKU，但不能依据历史销量直接断言当前库存风险。",
+          "citation": {
+            "page": null,
+            "start_line": 45,
+            "end_line": 45,
+            "heading": "经营分析月报 > 库存关注与月报建议",
+            "source_block_index": 13,
+            "start_char": 0,
+            "end_char": 84,
+            "citation_id": "C3",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5473d789366e4abcb9e6a0da84e7edd4",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8788067157364322,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "根据企业库存 SOP，库存覆盖天数 > 90 天，标记为库存积压关注。核查商品动销、效期、仓间分布和近期需求，再评估减少补货、调拨或受控促销；不要无条件打折清仓。",
+          "citation": {
+            "page": null,
+            "start_line": 22,
+            "end_line": 22,
+            "heading": "库存经营SOP > 库存积压处理",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 81,
+            "citation_id": "C4",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_44d6269075a64a1da3ff7a230dbda0b0",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8703778550019308,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 9,
+            "start_char": 0,
+            "end_char": 112,
+            "citation_id": "C5",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_cdf9ee1041b04f9db6a035052b324c52",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8669199346688061,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ],
+      "final": "当前经营数据（真实 MySQL / insight_ecommerce_db）：\n销售期间：2026 年 8 月；库存快照：2026-09-01；覆盖天数分母：2026-08-02～08-31 日均有效销量。\nSKU 1：august_units=720；stock=20；safety_stock=100；recent_units=684；coverage_days=0.8772\nSKU 2：august_units=720；stock=20；safety_stock=100；recent_units=696；coverage_days=0.8621\nSKU 33：august_units=480；stock=200；safety_stock=100；recent_units=456；coverage_days=13.1579\nSKU 34：august_units=480；stock=200；safety_stock=100；recent_units=468；coverage_days=12.8205\nSKU 35：august_units=480；stock=200；safety_stock=100；recent_units=468；coverage_days=12.8205\n\n内部规则（Local RAG）：根据企业库存 SOP，当前库存 < safety_stock，或者库存覆盖天数 < 7 天，标记为高缺货风险。先在同一 SKU、同一仓库口径比较；跨仓汇总时库存与 safety_stock 都必须求和。需复核可售库存、在途到货和补货周期后安排补货，不能仅凭汇总结果立即下采购单。\n来源：[C1] 02_库存经营SOP.md；库存经营SOP > 缺货风险判定；第 14～14 行\n按该企业 SOP，以上数据库结果中的 SKU 1、2 存在高缺货风险；建议复核可售库存、在途到货和补货周期。",
+      "calls": [
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "数据库查询助手",
+            "description": "分析 2026 年 8 月销量最高的商品，并根据公司的库存 SOP 判断 9 月 1 日是否存在缺货风险。 只查询数据库事实，使用2026年8月销量、2026-09-01库存快照和08-02至08-31日均销量口径。"
+          },
+          "id": "main-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "list_sql_tables",
+          "args": {},
+          "id": "db-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "get_table_data",
+          "args": {
+            "table_name": "products"
+          },
+          "id": "db-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE orders;"
+          },
+          "id": "db-2",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE order_items;"
+          },
+          "id": "db-3",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE inventory;"
+          },
+          "id": "db-4",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n ORDER BY august_units DESC,s.product_id LIMIT 5;"
+          },
+          "id": "db-5",
+          "type": "tool_call"
+        },
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "企业知识助手",
+            "description": "{\"knowledge_base_id\": \"kb_c0be7cd33d7942488b17273bc89c792a\", \"query\": \"公司的库存缺货风险是怎么定义的？\"}"
+          },
+          "id": "main-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "search_local_knowledge_base",
+          "args": {
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "query": "公司的库存缺货风险是怎么定义的？",
+            "top_k": 5
+          },
+          "id": "knowledge-0",
+          "type": "tool_call"
+        }
+      ],
+      "tool_counts": {
+        "task": 2,
+        "list_sql_tables": 1,
+        "get_table_data": 1,
+        "execute_sql_query": 4,
+        "search_local_knowledge_base": 1
+      },
+      "scripted_model_steps": {
+        "main": 3,
+        "db": 7,
+        "knowledge": 2
+      }
+    },
+    "B": {
+      "question": "找出当前库存积压商品，并根据公司 SOP 给出处理建议。",
+      "db_rows": [
+        {
+          "product_id": "5",
+          "august_units": "0",
+          "stock": "2000",
+          "safety_stock": "100",
+          "recent_units": "0",
+          "coverage_days": "None"
+        },
+        {
+          "product_id": "6",
+          "august_units": "1",
+          "stock": "2000",
+          "safety_stock": "100",
+          "recent_units": "1",
+          "coverage_days": "60000.0000"
+        }
+      ],
+      "sql": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n WHERE s.stock>=1000 AND COALESCE(r.recent_units,0)<=5 ORDER BY s.product_id;",
+      "evidence": [
+        {
+          "text": "根据企业库存 SOP，库存覆盖天数 > 90 天，标记为库存积压关注。核查商品动销、效期、仓间分布和近期需求，再评估减少补货、调拨或受控促销；不要无条件打折清仓。",
+          "citation": {
+            "page": null,
+            "start_line": 22,
+            "end_line": 22,
+            "heading": "库存经营SOP > 库存积压处理",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 81,
+            "citation_id": "C1",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_44d6269075a64a1da3ff7a230dbda0b0",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9451768687327378,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。",
+          "citation": {
+            "page": null,
+            "start_line": 26,
+            "end_line": 26,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 9,
+            "start_char": 0,
+            "end_char": 112,
+            "citation_id": "C2",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_cdf9ee1041b04f9db6a035052b324c52",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9350989571733817,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "根据企业库存 SOP，当前库存 < safety_stock，或者库存覆盖天数 < 7 天，标记为高缺货风险。先在同一 SKU、同一仓库口径比较；跨仓汇总时库存与 safety_stock 都必须求和。需复核可售库存、在途到货和补货周期后安排补货，不能仅凭汇总结果立即下采购单。",
+          "citation": {
+            "page": null,
+            "start_line": 14,
+            "end_line": 14,
+            "heading": "库存经营SOP > 缺货风险判定",
+            "source_block_index": 3,
+            "start_char": 0,
+            "end_char": 139,
+            "citation_id": "C3",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c51629888818415a9b600956471d8aa6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9214240918109938,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "库存覆盖天数＝当前可售库存÷最近 30 天日均有效销量。对于 2026-09-01 快照，最近 30 天指 2026-08-02 至 2026-08-31，仅计算已付款或已完成订单。覆盖天数在 7～30 天属于正常关注；超过 30 天且不超过 90 天时持续监测，不自动判为积压。",
+          "citation": {
+            "page": null,
+            "start_line": 18,
+            "end_line": 18,
+            "heading": "库存经营SOP > 库存覆盖与正常关注",
+            "source_block_index": 5,
+            "start_char": 0,
+            "end_char": 140,
+            "citation_id": "C4",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_c2c28f97f34447b7a48134aefffe1ed6",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9153244189644351,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 零动销库存处理",
+          "citation": {
+            "page": null,
+            "start_line": 24,
+            "end_line": 24,
+            "heading": "库存经营SOP > 零动销库存处理",
+            "source_block_index": 8,
+            "start_char": 0,
+            "end_char": 10,
+            "citation_id": "C5",
+            "document_id": "doc_25a7f1cba53b4df1a2b5bc03d4855954",
+            "document_name": "02_库存经营SOP.md",
+            "chunk_id": "chunk_7c008e1a3b8c416fb75dc5eb85c2570d",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8990009959508503,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ],
+      "final": "当前经营数据（真实 MySQL / insight_ecommerce_db）：\n销售期间：2026 年 8 月；库存快照：2026-09-01；覆盖天数分母：2026-08-02～08-31 日均有效销量。\nSKU 5：august_units=0；stock=2000；safety_stock=100；recent_units=0；coverage_days=None\nSKU 6：august_units=1；stock=2000；safety_stock=100；recent_units=1；coverage_days=60000.0000\n\n内部规则（Local RAG）：最近 30 天销量为 0 且当前库存 > 0，标记为零动销库存。此时库存覆盖天数不可计算，应显示 NULL 或明确不可计算，不应显示 0 天或伪造无限天数。优先核对上架状态、商品曝光、需求和库存记录，暂停未经论证的追加补货。\n来源：[C2] 02_库存经营SOP.md；库存经营SOP > 零动销库存处理；第 26～26 行\n根据企业库存 SOP，库存覆盖天数 > 90 天，标记为库存积压关注。核查商品动销、效期、仓间分布和近期需求，再评估减少补货、调拨或受控促销；不要无条件打折清仓。\n来源：[C1] 02_库存经营SOP.md；库存经营SOP > 库存积压处理；第 22～22 行\nSKU 5 属于零动销库存，覆盖天数不可计算；按企业 SOP 核对上架、曝光和需求，暂停未经论证的追加补货。\nSKU 6 属于库存积压关注，按企业 SOP 核查动销、仓间分布和需求，再评估减少补货、调拨或受控促销。",
+      "calls": [
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "数据库查询助手",
+            "description": "找出当前库存积压商品，并根据公司 SOP 给出处理建议。 只查询数据库事实，使用2026年8月销量、2026-09-01库存快照和08-02至08-31日均销量口径。"
+          },
+          "id": "main-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "list_sql_tables",
+          "args": {},
+          "id": "db-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "get_table_data",
+          "args": {
+            "table_name": "products"
+          },
+          "id": "db-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE orders;"
+          },
+          "id": "db-2",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE order_items;"
+          },
+          "id": "db-3",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE inventory;"
+          },
+          "id": "db-4",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n WHERE s.stock>=1000 AND COALESCE(r.recent_units,0)<=5 ORDER BY s.product_id;"
+          },
+          "id": "db-5",
+          "type": "tool_call"
+        },
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "企业知识助手",
+            "description": "{\"knowledge_base_id\": \"kb_c0be7cd33d7942488b17273bc89c792a\", \"query\": \"根据公司库存经营 SOP，库存覆盖超过90天和最近30天零动销库存分别怎么处理？\"}"
+          },
+          "id": "main-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "search_local_knowledge_base",
+          "args": {
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "query": "根据公司库存经营 SOP，库存覆盖超过90天和最近30天零动销库存分别怎么处理？",
+            "top_k": 5
+          },
+          "id": "knowledge-0",
+          "type": "tool_call"
+        }
+      ],
+      "tool_counts": {
+        "task": 2,
+        "list_sql_tables": 1,
+        "get_table_data": 1,
+        "execute_sql_query": 4,
+        "search_local_knowledge_base": 1
+      },
+      "scripted_model_steps": {
+        "main": 3,
+        "db": 7,
+        "knowledge": 2
+      }
+    },
+    "C": {
+      "question": "SKU 3 的当前销售情况和历史经营月报相比发生了什么变化？",
+      "db_rows": [
+        {
+          "product_id": "3",
+          "august_units": "40"
+        }
+      ],
+      "sql": "SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n AND i.product_id=3 GROUP BY i.product_id;",
+      "evidence": [
+        {
+          "text": "SKU 3 在 2026 年 6 月的有效销量为 600 件，成交金额为 102870.00 元。商品名称为虚构演示星禾精华03。SKU 3 在 6 月属于重点销售商品之一。本历史判断只描述六月，不保证未来月份维持相同表现；后续应按同口径重新查询。",
+          "citation": {
+            "page": null,
+            "start_line": 27,
+            "end_line": 27,
+            "heading": "经营分析月报 > SKU 3 六月历史判断",
+            "source_block_index": 7,
+            "start_char": 0,
+            "end_char": 124,
+            "citation_id": "C1",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_ed309a2031c14be5894abc8a1367c089",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9088779951545429,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## SKU 3 六月历史判断",
+          "citation": {
+            "page": null,
+            "start_line": 25,
+            "end_line": 25,
+            "heading": "经营分析月报 > SKU 3 六月历史判断",
+            "source_block_index": 6,
+            "start_char": 0,
+            "end_char": 15,
+            "citation_id": "C2",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_797f6bda2cbd452e9f24b9bdb47b82d8",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.9012833214061983,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "月报未获得六月末库存快照，因此不作当时缺货或积压的数值结论。建议后续核对库存快照日期、近月销量与补货周期；优先关注核心 SKU，但不能依据历史销量直接断言当前库存风险。",
+          "citation": {
+            "page": null,
+            "start_line": 45,
+            "end_line": 45,
+            "heading": "经营分析月报 > 库存关注与月报建议",
+            "source_block_index": 13,
+            "start_char": 0,
+            "end_char": 84,
+            "citation_id": "C3",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5473d789366e4abcb9e6a0da84e7edd4",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8937944399985364,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 六月核心 SKU（按有效销量排序）",
+          "citation": {
+            "page": null,
+            "start_line": 29,
+            "end_line": 29,
+            "heading": "经营分析月报 > 六月核心 SKU（按有效销量排序）",
+            "source_block_index": 8,
+            "start_char": 0,
+            "end_char": 20,
+            "citation_id": "C4",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_5d2bbcae059d42c1b6d194fee0f8088e",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.8880872266173951,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        },
+        {
+          "text": "## 六月各品类表现",
+          "citation": {
+            "page": null,
+            "start_line": 16,
+            "end_line": 16,
+            "heading": "经营分析月报 > 六月各品类表现",
+            "source_block_index": 4,
+            "start_char": 0,
+            "end_char": 10,
+            "citation_id": "C5",
+            "document_id": "doc_8be6f4c4394b49719e421f08d0fa2a6e",
+            "document_name": "01_经营分析月报.md",
+            "chunk_id": "chunk_3309daf187ab4a16a4e6cbc4cd9e3b48",
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "score": 0.878480163292916,
+            "score_type": "inner_product"
+          },
+          "truncated": false
+        }
+      ],
+      "final": "当前经营数据（真实 MySQL / insight_ecommerce_db）：\n销售期间：2026 年 8 月；库存快照：2026-09-01；覆盖天数分母：2026-08-02～08-31 日均有效销量。\nSKU 3：august_units=40\n\n历史内部文档（Local RAG）：SKU 3 在 2026 年 6 月的有效销量为 600 件，成交金额为 102870.00 元。商品名称为虚构演示星禾精华03。SKU 3 在 6 月属于重点销售商品之一。本历史判断只描述六月，不保证未来月份维持相同表现；后续应按同口径重新查询。\n来源：[C1] 01_经营分析月报.md；经营分析月报 > SKU 3 六月历史判断；第 27～27 行\n六月月报记录 600 件；八月数据库查询为 40 件，月度有效销量下降。\n历史文档反映 2026 年 6 月，数据库查询反映 2026 年 8 月。历史判断和当前表现存在时间口径差异，不能据此否定六月月报；月份天数也不同，不能直接当作日均变化或因果解释。",
+      "calls": [
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "数据库查询助手",
+            "description": "SKU 3 的当前销售情况和历史经营月报相比发生了什么变化？ 只查询数据库事实，使用2026年8月销量、2026-09-01库存快照和08-02至08-31日均销量口径。"
+          },
+          "id": "main-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "list_sql_tables",
+          "args": {},
+          "id": "db-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "get_table_data",
+          "args": {
+            "table_name": "products"
+          },
+          "id": "db-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE orders;"
+          },
+          "id": "db-2",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE order_items;"
+          },
+          "id": "db-3",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE inventory;"
+          },
+          "id": "db-4",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n AND i.product_id=3 GROUP BY i.product_id;"
+          },
+          "id": "db-5",
+          "type": "tool_call"
+        },
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "企业知识助手",
+            "description": "{\"knowledge_base_id\": \"kb_c0be7cd33d7942488b17273bc89c792a\", \"query\": \"SKU 3 在 6 月表现如何？\"}"
+          },
+          "id": "main-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "search_local_knowledge_base",
+          "args": {
+            "knowledge_base_id": "kb_c0be7cd33d7942488b17273bc89c792a",
+            "query": "SKU 3 在 6 月表现如何？",
+            "top_k": 5
+          },
+          "id": "knowledge-0",
+          "type": "tool_call"
+        }
+      ],
+      "tool_counts": {
+        "task": 2,
+        "list_sql_tables": 1,
+        "get_table_data": 1,
+        "execute_sql_query": 4,
+        "search_local_knowledge_base": 1
+      },
+      "scripted_model_steps": {
+        "main": 3,
+        "db": 7,
+        "knowledge": 2
+      }
+    },
+    "missing_kb": {
+      "question": "分析 2026 年 8 月销量最高的商品，并根据公司的库存 SOP 判断 9 月 1 日是否存在缺货风险。",
+      "db_rows": [
+        {
+          "product_id": "1",
+          "august_units": "720",
+          "stock": "20",
+          "safety_stock": "100",
+          "recent_units": "684",
+          "coverage_days": "0.8772"
+        },
+        {
+          "product_id": "2",
+          "august_units": "720",
+          "stock": "20",
+          "safety_stock": "100",
+          "recent_units": "696",
+          "coverage_days": "0.8621"
+        },
+        {
+          "product_id": "33",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "456",
+          "coverage_days": "13.1579"
+        },
+        {
+          "product_id": "34",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "468",
+          "coverage_days": "12.8205"
+        },
+        {
+          "product_id": "35",
+          "august_units": "480",
+          "stock": "200",
+          "safety_stock": "100",
+          "recent_units": "468",
+          "coverage_days": "12.8205"
+        }
+      ],
+      "sql": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n ORDER BY august_units DESC,s.product_id LIMIT 5;",
+      "evidence": [],
+      "final": "当前经营数据（真实 MySQL / insight_ecommerce_db）：\n销售期间：2026 年 8 月；库存快照：2026-09-01；覆盖天数分母：2026-08-02～08-31 日均有效销量。\nSKU 1：august_units=720；stock=20；safety_stock=100；recent_units=684；coverage_days=0.8772\nSKU 2：august_units=720；stock=20；safety_stock=100；recent_units=696；coverage_days=0.8621\nSKU 33：august_units=480；stock=200；safety_stock=100；recent_units=456；coverage_days=13.1579\nSKU 34：august_units=480；stock=200；safety_stock=100；recent_units=468；coverage_days=12.8205\nSKU 35：august_units=480；stock=200；safety_stock=100；recent_units=468；coverage_days=12.8205\n\n内部知识库未提供可用依据。保留上述数据库事实，不能据此编造公司 SOP 或声称已按内部规则判定。",
+      "calls": [
+        {
+          "name": "task",
+          "args": {
+            "subagent_type": "数据库查询助手",
+            "description": "分析 2026 年 8 月销量最高的商品，并根据公司的库存 SOP 判断 9 月 1 日是否存在缺货风险。 只查询数据库事实，使用2026年8月销量、2026-09-01库存快照和08-02至08-31日均销量口径。"
+          },
+          "id": "main-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "list_sql_tables",
+          "args": {},
+          "id": "db-0",
+          "type": "tool_call"
+        },
+        {
+          "name": "get_table_data",
+          "args": {
+            "table_name": "products"
+          },
+          "id": "db-1",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE orders;"
+          },
+          "id": "db-2",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE order_items;"
+          },
+          "id": "db-3",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "DESCRIBE inventory;"
+          },
+          "id": "db-4",
+          "type": "tool_call"
+        },
+        {
+          "name": "execute_sql_query",
+          "args": {
+            "query": "WITH aug AS (\n SELECT i.product_id,SUM(i.quantity) AS august_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-01' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), recent AS (\n SELECT i.product_id,SUM(i.quantity) AS recent_units FROM order_items i JOIN orders o USING(order_id)\n WHERE o.order_status IN ('paid','completed') AND o.paid_at >= '2026-08-02' AND o.paid_at < '2026-09-01'\n GROUP BY i.product_id\n), stock AS (\n SELECT product_id,SUM(stock_quantity) AS stock,SUM(safety_stock) AS safety_stock FROM inventory GROUP BY product_id\n)\nSELECT s.product_id,COALESCE(a.august_units,0) AS august_units,s.stock,s.safety_stock,\n COALESCE(r.recent_units,0) AS recent_units,s.stock*30/NULLIF(r.recent_units,0) AS coverage_days\nFROM stock s LEFT JOIN aug a USING(product_id) LEFT JOIN recent r USING(product_id)\n ORDER BY august_units DESC,s.product_id LIMIT 5;"
+          },
+          "id": "db-5",
+          "type": "tool_call"
+        }
+      ],
+      "tool_counts": {
+        "task": 1,
+        "list_sql_tables": 1,
+        "get_table_data": 1,
+        "execute_sql_query": 4
+      },
+      "scripted_model_steps": {
+        "main": 2,
+        "db": 7
+      }
+    }
+  },
+  "external_http_requests": 0,
+  "real_llm_requests": 0,
+  "network_agent_calls": 0,
+  "database_counts_unchanged": true,
+  "temporary_fixture_cleaned": true
+}

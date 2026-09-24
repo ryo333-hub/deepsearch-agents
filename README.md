@@ -1,337 +1,198 @@
-<div align='center'>
-  <h1 style="margin-top: 15px;">「深度研搜」对话式多智能体研究系统</h1>
-  <h4><b>deepsearch-agents</b></h4>
-  <p><em>可能是全网最适合用于系统学习 DeepAgents 的多智能体深度研究实战项目，配套系统性文字教程与对应章节分支，带你打通主智能体调度、专家助手分工、多来源检索、文件交付与前后端实时联动全链路</em></p>
-</div>
+# DeepSearch Agents · 多源企业分析助手
 
-<div align='center'>
+面向企业数据分析场景的多源 AI Agent 原型。用户用自然语言提出业务问题，Main Agent 自主规划任务，按需委派数据库、私有知识和网络搜索助手，再依据多源证据生成综合回答。
 
-![AI](https://img.shields.io/badge/AI-Agent-00c853?style=flat)
-![DeepAgents](https://img.shields.io/badge/DeepAgents-0.5.7-1C3C3C.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-WebSocket-009688.svg?logo=fastapi&logoColor=white)
-![Stars](https://img.shields.io/github/stars/didilili/deepsearch-agents?logo=github&style=flat)
-[![Read Online](https://img.shields.io/badge/在线教程-点击访问-blue?logo=bookstack)](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E6%B7%B1%E5%BA%A6%E7%A0%94%E6%90%9C/0-%E5%89%8D%E8%A8%80)
+**当前状态：功能冻结，本地单进程 Demo。**
 
-</div>
+**Core integration capabilities validated** — **final synthesis reliability not fully validated**。
+离线回归 **608/608 PASS**；三次真实端到端验收整体均为 **FAIL**。工具执行成功与最终综合回答可靠性分别验收。
 
-**📢 说明**：本套实战项目已于 2026 年 5 月 17 日 更新完成，配套教程、章节分支和前后端代码均可对照学习。
+![电商 Demo 首页：知识库选择、三类助手及任务入口](docs/images/ecommerce-demo-home.png)
 
-如果你正在找一个适合学习 `DeepAgents`、`WebSocket`、`Tavily`、`RAGFlow` 和 AI Agent 工程开发的实战项目，「深度研搜」很可能是最适合你的项目。
+*已有真实验收开始前的页面截图：已选“电商库存 SOP”，尚未提交任务。不是成功回答的截图。*
 
-它不是只调用一次大模型接口，也不是套一个搜索 API 做问答演示。这个项目围绕深度研究场景，用 DeepAgents 组织主智能体和专家子智能体，让系统可以根据任务需要查公开网络、查结构化数据库、查 RAGFlow 私有知识库、读取用户上传附件，并把最终结果整理成回答、Markdown 或 PDF。换句话说，你学到的不是某一个框架 API，而是一条 AI 应用从多智能体规划、工具接入、上下文隔离、接口交付到前端联调的完整项目主线。
+## 核心能力
 
-> 本套仓库是 [ai-agents-from-zero](https://github.com/didilili/ai-agents-from-zero) 教程体系中的 [实战项目-深度研搜](https://github.com/didilili/ai-agents-from-zero/tree/main/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E6%B7%B1%E5%BA%A6%E7%A0%94%E6%90%9C) 配套源码仓库，除了可直接运行和二次开发的项目代码之外，也提供了与教程章节对应的 Git 分支演进过程，以及完整的在线图文讲义入口。
-> 如果你想系统学习「AI 智能体 大模型应用开发」，也可直接从系统教程 [AI 智能体实战速成指南-大模型入门](https://didilili.github.io/ai-agents-from-zero/#/) 开始。
+- Main Agent 自主规划、Sub-Agent 路由与必要补查，不预设三源调用顺序。
+- MySQL 自然语言分析：发现表、检查结构与样例、执行只读 SQL；Demo 使用专用只读账号。
+- Local RAG：文档加载、分块、本地 embedding、向量检索，返回带文档与片段位置的 Citation。
+- Tavily 网络搜索，保留公开来源 URL；公开趋势仅作为背景。
+- 多源证据综合：区分数据库事实、内部规则、公开背景和分析推断；模型遵循仍有边界。
+- FastAPI + WebSocket 实时事件：助手/工具调用、结果、错误与取消。事件推送不等于逐 token 展示。
+- `thread_id` 会话隔离、Knowledge Base 选择、会话内附件及文件产物。
+- Prompt contract tests 与真实 LLM acceptance testing，分别验证实现约束与模型行为。
 
-![深度研搜前端首页：任务示例、助手状态和对话式多智能体研究台](docs/images/deepsearch-agent-home.jpg)
+## 技术栈
 
-## 📖 项目介绍
+| 层 | 当前实现 |
+| --- | --- |
+| 后端 | Python 3.12、FastAPI、Uvicorn |
+| Agent | Deep Agents 0.5.7、LangChain、LangGraph、InMemorySaver |
+| LLM | OpenAI 兼容协议；真实验收使用 DeepSeek `deepseek-flash` |
+| 数据库 | MySQL 8.4、mysql-connector-python、Docker Compose |
+| 本地知识库 | sentence-transformers、CPU PyTorch、multilingual-e5-small、NumPy 向量索引 |
+| Web | Tavily |
+| 前端 | React 19、TypeScript、Vite、Ant Design、Tailwind CSS |
+| 文件与依赖 | pypdf、python-docx、pandas、ReportLab；uv、pnpm |
 
-在真实研究场景里，用户的问题经常不是一句普通问答可以解决的。
+依赖以 [pyproject.toml](pyproject.toml)、[uv.lock](uv.lock)、[frontend/package.json](frontend/package.json) 为准。保留的 RAGFlow 教学代码与依赖未注册到当前 Main，电商 Demo 无需 RAGFlow 服务。
 
-比如：
+## Architecture
 
-```text
-结合公开资料、数据库信息和我上传的文档，整理一份机器人行业研究报告，并生成 PDF。
+```mermaid
+flowchart TD
+    UI[Frontend: React / KB selector] -->|POST /api/task: query, thread_id, knowledge_base_id| API[FastAPI]
+    API --> RUN[run_deep_agent: validate KB + prepare context]
+    RUN --> MAIN[Main Agent: plan / task delegation]
+    RUN --> CTX[ContextVar: thread_id / selected KB / session_dir]
+    RUN --> FILES[Session workspace: app/output/session_id]
+    UP[Uploads: app/updated/session_id] -->|copy| FILES
+    MAIN <--> MEM[InMemorySaver: keyed by thread_id]
+    MAIN --> DB[Database Agent]
+    DB --> DBT[Database Tools: read-only SQL]
+    DBT --> MYSQL[(MySQL demo)]
+    MAIN --> KB[Local Knowledge Agent]
+    KB --> RAG[search_local_knowledge_base]
+    RAG --> EMB[Local E5 query embedding]
+    EMB --> VEC[NumPy vector retrieval]
+    STORE[(Session / KB scoped index + chunks)] --> VEC
+    CTX -. tool context .-> DBT
+    CTX -. session + selected KB validation .-> RAG
+    MAIN --> WEB[Web Agent]
+    WEB --> SEARCH[internet_search / Tavily]
+    MYSQL --> DBR[Database results]
+    VEC --> KBR[Knowledge evidence + Citation]
+    SEARCH --> WR[Public results + URLs]
+    DBR --> SYN[Main Agent synthesis]
+    KBR --> SYN
+    WR --> SYN
+    SYN --> MON[monitor: task_result]
+    DBT -. tool events .-> MON
+    RAG -. tool events .-> MON
+    SEARCH -. tool events .-> MON
+    MON --> SOCKET[WebSocket /ws/thread_id]
+    SOCKET --> UI
 ```
 
-这个任务背后可能包含多类动作：
+图中 `session_id` 是运行入口对 `thread_id` 的参数命名，实际目录为 `session_{thread_id}`。索引在 KB preparation 阶段建立。入口、上下文传递与存储详见 [Architecture](docs/architecture.md)。Main 还注册附件读取、Markdown/PDF 生成工具，不是本次三源验收重点。
 
-- 判断需要公开资料、内部数据、私有知识库还是本次上传文件；
-- 去互联网搜索最新新闻、政策、产品或行业资料；
-- 到 MySQL 查询企业结构化业务数据；
-- 到 RAGFlow 查询内部非结构化文档；
-- 读取用户上传的 PDF、Word、Excel、Markdown 或文本文件；
-- 汇总多来源信息，判断资料是否足够；
-- 生成 Markdown 报告，并在需要时转换成 PDF；
-- 把执行过程、最终结果和生成文件实时展示给前端。
+## Demo Scenario
 
-所以「深度研搜」更像一个会分工、会查资料、会生成交付物的研究助手。用户只需要提出任务，系统会在后端组织一条可观察的多智能体执行链路。
+> 分析 2026 年 8 月销量最高的商品及当前库存情况，依据公司的库存 SOP 判断缺货风险；再检索近期公开的美妆消费趋势作为背景，给出简短建议，并分别标明数据库依据、内部文档引用和公开来源链接。
 
-```text
-用户任务
-  -> FastAPI 接口接收请求
-  -> run_deep_agent 创建会话目录并写入上下文
-  -> 主智能体分析任务
-  -> 分派给网络搜索助手 / 数据库查询助手 / RAGFlow 助手
-  -> 主智能体汇总多来源信息
-  -> 调用文件工具生成 Markdown / PDF
-  -> monitor 通过 WebSocket 推送进度
-  -> 前端展示事件、答案和文件列表
+Database 查询销量与库存，Knowledge 检索企业 SOP，Web 查询公开趋势；Main 自主决定委派和补查。第三轮中，Main 补查了 SOP 所需的 **2026-08-02～08-31** 有效销量。
+
+合成数据中两件商品整月销量均为 720 件，精确 30 天销量分别为 684、696 件，跨仓库存各 20 件，覆盖约 0.88、0.86 天。库存为 **2026-09-01 快照**，不代表运行当天库存。这些数值仅用于说明和验收，未写入 Main Prompt 作为固定答案。
+
+数据、SOP、启动与证据索引：[电商 Demo](demo/ecommerce/README.md)。
+
+## Quick Start
+
+以下为仓库根目录下的 PowerShell 命令。需要 Python 3.12、uv、Docker Compose、满足 Vite 7 要求的 Node.js、pnpm 10.33.0 和自己的 API 凭据。
+
+### 1. Python 与配置
+
+```powershell
+uv sync --frozen
+Copy-Item .env.example .env
 ```
 
-## ✨ 项目亮点
+在本地 `.env` 中设置以下字段，占位符需替换；不要提交 `.env`：
 
-- **一主三从的多智能体架构**
-  - 主智能体负责理解任务、规划步骤、调度助手和最终汇总。
-  - 网络搜索助手、数据库查询助手、RAGFlow 助手分别处理不同信息来源。
-- **多来源检索，而不是模型裸答**
-  - `Tavily` 负责互联网公开资料检索。
-  - `MySQL` 负责查询结构化业务数据。
-  - `RAGFlow` 负责查询内部非结构化文档。
-  - 上传附件由主智能体通过文件工具读取。
-- **从检索到交付的完整可运行链路**
-  - 不停留在 Prompt 设计，而是会真实调用工具、读取数据、生成 Markdown，并在需要时转换成 PDF。
-- **长任务执行过程可观察**
-  - 工具调用、子智能体调用、工作目录创建、任务结果、取消和异常都会通过 `monitor` 推送到前端。
-- **会话级上下文隔离**
-  - 通过 `thread_id` 和 `session_dir` 区分不同任务，`ContextVar` 让深层工具也能拿到当前会话身份和文件目录。
-- **工程化前后端结构清晰**
-  - 基于 `FastAPI + WebSocket + DeepAgents + React` 组织任务接口、异步执行、事件推送、文件上传和文件下载。
-- **不仅有实战代码，还有完整配套教程文档**
-  - 项目配有一套系统化、完全免费的教程讲义，适合按章节从 DeepAgents 基础、子智能体、Backend、中间件一直学到完整项目闭环。
-- **兼顾学习价值与可扩展性**
-  - 既可以按教程章节逐步理解，也可以在此基础上继续扩展权限控制、任务队列、事件持久化、评测体系等能力。
-
-这套课程十分适合这些场景：
-
-- 想系统学习 `DeepAgents`，但不想只停留在几个玩具示例。
-- 想把 `Tavily`、`MySQL`、`RAGFlow` 和大模型放到同一个研究助手场景里理解。
-- 想做一个比简单模型调用更接近真实开发的 AI Agent 项目。
-- 想把项目写进简历，并且能说清楚智能体层、工具层、服务层、文件层和前端层分别做了什么。
-
-## 🏗️ 系统架构
-
-![深度研搜系统架构图：前端、FastAPI、DeepAgents、子智能体、工具和文件产物之间的关系](docs/images/deepsearch-system-architecture.svg)
-
-项目采用 DeepAgents 中典型的 Orchestrator-Workers 模式：主智能体作为调度中心，三个专家助手负责信息获取，文件工具由主智能体直接掌握。
-
-项目围绕两条主线展开：
-
-| 主线             | 做什么                                                       | 涉及模块                                                                  |
-| ---------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| 多智能体深度研搜 | 基于用户任务完成规划、分派、检索、读取附件、汇总和生成交付物 | `DeepAgents` / `LangChain` / `LangGraph` / `Tavily` / `MySQL` / `RAGFlow` |
-| 前后端实时闭环   | 启动后台任务、上传文件、推送执行过程、展示结果和下载生成文件 | `FastAPI` / `WebSocket` / `React` / `Vite`                                |
-
-### 智能体与工具
-
-| 归属           | 能力                                     | 工具                                                          |
-| -------------- | ---------------------------------------- | ------------------------------------------------------------- |
-| 主智能体       | 任务规划、助手调度、结果汇总、文件交付   | `read_file_content`、`generate_markdown`、`convert_md_to_pdf` |
-| 网络搜索助手   | 查询互联网公开信息、新闻、政策和网页资料 | `internet_search`                                             |
-| 数据库查询助手 | 发现表名、预览表结构和样例数据、执行 SQL | `list_sql_tables`、`get_table_data`、`execute_sql_query`      |
-| RAGFlow 助手   | 发现可用知识库助手，并向内部知识库提问   | `get_assistant_list`、`create_ask_delete`                     |
-
-![深度研搜网络搜索任务执行页：WebSocket 事件流、工具调用和最终回答](docs/images/deepsearch-network-search-result.jpg)
-
-## 🛠️ 项目技术栈
-
-| 模块           | 技术                                             | 作用                                                                          |
-| -------------- | ------------------------------------------------ | ----------------------------------------------------------------------------- |
-| 智能体框架     | `DeepAgents`                                     | 创建主智能体和子智能体，承接长任务、多工具、多助手调度                        |
-| 图与检查点     | `LangGraph`                                      | 提供底层运行时和 `InMemorySaver` 会话检查点                                   |
-| 模型与工具抽象 | `LangChain` / `langchain-core`                   | 封装 OpenAI 兼容模型、工具声明和 Agent 调用结构                               |
-| 大模型接入     | OpenAI 兼容接口                                  | 通过 `.env` 中的 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`LLM_QWEN_MAX` 接入模型 |
-| 网络搜索       | `Tavily`                                         | 为网络搜索助手提供公开资料检索                                                |
-| 结构化数据     | `MySQL` / `mysql-connector-python`               | 为数据库助手提供药品、库存、销售等教学业务数据                                |
-| 私有知识库     | `RAGFlow` / `ragflow-sdk`                        | 为知识库助手提供内部文档问答能力                                              |
-| 文件处理       | `pypdf` / `python-docx` / `pandas` / `ReportLab` | 读取上传附件，生成 Markdown，转换 PDF                                         |
-| 后端接口       | `FastAPI` / `Uvicorn`                            | 提供任务、取消、上传、文件列表、下载和 WebSocket 接口                         |
-| 实时通信       | `WebSocket`                                      | 推送工具调用、助手调用、最终结果和错误事件                                    |
-| 前端           | `React` / `Vite` / `Ant Design` / `Tailwind CSS` | 提供对话式研搜界面、事件流、附件上传和文件下载                                |
-| 依赖管理       | `uv` / `pnpm`                                    | 管理 Python 后端和前端依赖                                                    |
-
-## 📁 项目结构
-
-```text
-deepsearch-agents/
-├── app/
-│   ├── agent/
-│   │   ├── subagents/              # 网络搜索、数据库查询、RAGFlow 三个子智能体
-│   │   ├── llm.py                  # OpenAI 兼容模型初始化
-│   │   ├── main_agent.py           # 主智能体组装与 run_deep_agent 执行入口
-│   │   └── prompts.py              # 读取 app/prompt/prompts.yml
-│   ├── api/
-│   │   ├── context.py              # ContextVar 保存 thread_id 和 session_dir
-│   │   ├── monitor.py              # 工具调用、助手调用、结果和异常事件推送
-│   │   └── server.py               # FastAPI 任务、上传、文件、下载、WebSocket 接口
-│   ├── prompt/
-│   │   └── prompts.yml             # 主智能体和子智能体提示词配置
-│   ├── ragflow/                    # RAGFlow 配置和基础调用示例
-│   ├── tools/                      # Tavily、MySQL、RAGFlow、文件读取、Markdown、PDF 工具
-│   ├── utils/                      # 路径解析、Markdown/PDF 底层转换等普通 Python 工具
-│   ├── output/                     # 运行时生成：每个会话的 Markdown、PDF 等产物
-│   └── updated/                    # 运行时生成：用户上传文件的会话暂存目录
-├── docker/
-│   ├── docker-compose.yaml         # 本地 MySQL 教学环境
-│   └── mysql/mysql.sql             # 药品、库存、销售记录模拟数据
-├── docs/knowledge_base/            # RAGFlow 知识库示例 PDF
-├── examples/                       # DeepAgents 章节示例脚本
-├── frontend/                       # React + Vite 前端项目
-├── tests/                          # 测试目录
-├── .env.example                    # 环境变量示例
-├── pyproject.toml                  # Python 项目依赖声明
-├── requirements.txt                # 依赖清单
-└── uv.lock                         # uv 锁定文件
-```
-
-## 🚀 快速开始
-
-### 1. 准备环境
-
-- Python `3.12`
-- `uv`
-- Docker 与 Docker Compose
-- Node.js 与 `pnpm`
-- 可用的大模型 API Key
-- Tavily API Key
-- RAGFlow 服务与 API Key
-
-### 2. 克隆项目
-
-```bash
-git clone https://github.com/didilili/deepsearch-agents.git
-cd deepsearch-agents
-```
-
-### 3. 安装后端依赖
-
-```bash
-uv sync
-```
-
-### 4. 配置环境变量
-
-```bash
-cp .env.example .env
-```
-
-按本机实际服务和密钥修改 `.env`：
-
-```bash
-# LLM 配置
-OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-OPENAI_API_KEY=你的大模型_API_KEY
-LLM_QWEN_MAX=qwen-max
-
-# Tavily 配置
-TAVILY_API_KEY=你的_TAVILY_API_KEY
-
-# RAGFlow 配置
-RAGFLOW_API_URL=http://your-ragflow-host
-RAGFLOW_API_KEY=ragflow-your-api-key
-
-# MySQL 配置
-MYSQL_USER=root
-MYSQL_PASSWORD=root
-MYSQL_DATABASE=deepsearch_db
+```dotenv
+OPENAI_BASE_URL=https://api.deepseek.com
+OPENAI_API_KEY=<your-deepseek-key>
+LLM_QWEN_MAX=deepseek-flash
+TAVILY_API_KEY=<your-tavily-key>
 MYSQL_HOST=localhost
 MYSQL_PORT=3307
-MYSQL_CHARSET=utf8mb4
-MYSQL_COLLATION=utf8mb4_unicode_ci
-MYSQL_SQL_MODE=TRADITIONAL
+MYSQL_PASSWORD=<your-local-mysql-admin-password>
+MYSQL_DATABASE=deepsearch_db
 ```
 
-### 5. 启动 MySQL 教学库
+`LLM_QWEN_MAX` 是现有模型配置变量名。`.env.example` 保留通用教学默认值，按上文覆盖即可；Local RAG 不需要 RAGFlow 凭据。
 
-本仓库的 `docker/mysql/mysql.sql` 会在 MySQL 容器首次创建数据目录时自动导入药品、库存和销售记录模拟数据。
+### 2. MySQL 与电商数据（首次安装）
 
-```bash
-docker compose -f docker/docker-compose.yaml up -d
+```powershell
+docker compose --env-file .env -f docker/docker-compose.yaml up -d
+docker compose --env-file .env -f docker/docker-compose.yaml ps
+# 等待 healthy；输入与本地 MySQL 一致的管理密码，不将其写入命令历史
+$demoSecret = Read-Host 'Local MySQL admin password' -AsSecureString
+$env:ECOMMERCE_ADMIN_PASSWORD = [System.Net.NetworkCredential]::new('', $demoSecret).Password
+try { uv run python scripts/seed_ecommerce_demo.py --apply }
+finally { Remove-Item Env:ECOMMERCE_ADMIN_PASSWORD }
+uv run python scripts/start_ecommerce_demo.py --init-config
+uv run python scripts/start_ecommerce_demo.py --check
 ```
 
-### 6. 准备 RAGFlow 知识库
+Compose 首次初始化原教学库；seed 脚本另建 `insight_ecommerce_db` 与 `ecommerce_ro`。脚本只连接 localhost:3307，拒绝覆盖已有电商库/账号。已有 Demo 跳过 seed，不重置数据卷；已有卷的密码不会随 `.env` 自动变化。
 
-RAGFlow 不在本仓库的 Docker Compose 中启动，需要接入你已有的 RAGFlow 服务，或按配套教程部署。仓库内的 `docs/knowledge_base/` 提供了电商、金融等示例 PDF，可用于创建 RAGFlow 知识库和聊天助手。
+只读凭据与 Demo profile 位于被忽略的 `.data/ecommerce/`；启动脚本仅覆盖进程内数据库配置，不改 `.env`，Agent 不使用管理账号。
 
-如果暂时不使用私有知识库能力，也可以先跑网络搜索、数据库查询和上传文件读取链路；只有任务触发 RAGFlow 助手时才会依赖 `RAGFLOW_API_URL` 和 `RAGFLOW_API_KEY`。
+### 3. 本地 embedding 与 Demo KB
 
-### 7. 启动后端
+首次安装显式下载固定模型快照，不调用 LLM；已有模型则跳过下载。
 
-```bash
-uv run uvicorn app.api.server:app --host 0.0.0.0 --port 8000 --reload
+```powershell
+uv run python -c "from huggingface_hub import snapshot_download; from app.local_rag.config import EmbeddingConfig, EMBEDDING_MODEL_NAME, EMBEDDING_MODEL_REVISION; snapshot_download(repo_id=EMBEDDING_MODEL_NAME, revision=EMBEDDING_MODEL_REVISION, local_dir=str(EmbeddingConfig().model_dir))"
+uv run python -X utf8 scripts/prepare_ecommerce_demo_kb.py
 ```
 
-后端默认接口：
+固定 revision 为 `614241f622f53c4eeff9890bdc4f31cfecc418b3`，运行时仅加载本地文件。准备脚本用库存 SOP 建立新会话的 KB，输出 `thread_id`、`knowledge_base_id` 和页面链接。
 
-| 接口                                | 说明                                   |
-| ----------------------------------- | -------------------------------------- |
-| `POST /api/task`                    | 启动一次 DeepAgents 后台任务           |
-| `POST /api/task/{thread_id}/cancel` | 取消指定会话任务                       |
-| `POST /api/upload`                  | 上传一个或多个文件到当前会话           |
-| `GET /api/files`                    | 列出当前会话输出目录中的生成文件       |
-| `GET /api/download`                 | 下载输出目录中的文件                   |
-| `WebSocket /ws/{thread_id}`         | 推送工具调用、助手调用、结果和异常事件 |
+### 4. 后端与前端
 
-### 8. 启动前端
-
-```bash
+```powershell
+uv run python scripts/start_ecommerce_demo.py
+# 另一个终端
 cd frontend
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-前端默认连接：
+后端为 `127.0.0.1:8000`，前端为 `localhost:5173`。打开准备脚本输出的链接，确认选择器为“电商库存 SOP”。普通上传仅保存附件；新建研搜切换 session 后需要重新准备 KB。提交任务产生真实 API 费用；冻结阶段无需再次提交。
 
-```text
-API: http://localhost:8000
-WS:  ws://localhost:8000
+## Tests
+
+冻结前最后一次全量离线回归：**608/608 PASS**，DeepSeek / Tavily / 外部 HTTP 均为 0，见 [离线报告](demo/ecommerce/main_fact_fidelity_offline_results.json)。四项字段保真测试是静态 Prompt 契约检查，不代表模型一定遵循。
+
+```powershell
+uv run python -B -m unittest discover -s tests -p "test*.py"
 ```
 
-如需修改，可以在 `frontend/.env.local` 中配置：
+覆盖 tools、文件边界、Local RAG 加载/分块/embedding 适配/向量检索/Citation、数据库语义、Main synthesis contracts、KB 选择和 API 上下文传递。离线用例使用替身隔离服务；真实 embedding 与浏览器显示由此前单独验收提供证据。608 项不是 608 项浏览器测试。
 
-```bash
-VITE_API_BASE_URL=http://localhost:8000
-VITE_WS_BASE_URL=ws://localhost:8000
-```
+上述命令发现根层离线用例；`tests/integration/` 真实服务测试采用显式开关，冻结阶段不要开启。已记录的 608 项回归另外使用本地网络阻断观察入口，报告保留网络审计结果。前端编译可在 `frontend/` 执行 `pnpm build`。
 
-### 9. 试几个任务
+## Real LLM Acceptance Testing
 
-```text
-从数据库中查询心血管药品的库存情况，并生成 Markdown 报告。
-```
+真实 **DeepSeek + MySQL + Local RAG + Tavily + 浏览器** 验证了 autonomous routing、precise database re-query、citation propagation、evidence source separation 和 frontend integration。
 
-```text
-搜索 2026 年 AI 在电商行业的应用趋势，并结合知识库资料生成一份 PDF。
-```
+| 轮次 | 整体验收 | 主要问题 | 证据 |
+| --- | --- | --- | --- |
+| 1 | FAIL | 整月数据近似 SOP 窗口；无依据类目/趋势映射 | [原始记录](demo/ecommerce/main_agent_demo_integration_results.json) |
+| 2 | FAIL | 精确窗口修复，但将“个护”写成“护肤类” | [Clean Retest 2](demo/ecommerce/main_agent_demo_clean_retest_2.json) |
+| 3 | FAIL | 分类保真通过；无分仓销量却断言单仓覆盖不足 0.5 天 | [Clean Retest 3](demo/ecommerce/main_agent_demo_clean_retest_3.json) |
 
-```text
-请先读取我上传的行业报告，再结合公开资料整理一份研究摘要。
-```
+第三轮跨仓计算、公开背景边界、Citation/URL 和页面显示通过，但额外单仓指标缺少证据。因此 **tool-grounded execution** 与 **LLM synthesis reliability** 分开评估：核心集成能力已验证，最终综合可靠性尚未完全验证。没有第四轮修复，没有将 FAIL 改成 PASS。
 
-## 📚 配套教程目录
+第三轮：23 次 DeepSeek、4 次 Tavily、37 次工具调用、320,150 tokens。三个独立真实会话不构成统计意义上的可靠性保证。
 
-教程总入口：[深度研搜完整教程](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E6%B7%B1%E5%BA%A6%E7%A0%94%E6%90%9C/0-%E5%89%8D%E8%A8%80)
+## Known Limitations
 
-| 章节 | 标题                                                                                                                                   | 学习重点                                                      | 对应分支                              |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------- |
-| 0    | [前言](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/0-前言)                                                      | 项目定位、学习价值、技术栈和能力边界                          | `-`                                   |
-| 1    | [DeepAgents 基础与核心概念](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/1-DeepAgents基础与核心概念)             | 智能体演进、框架定位、核心能力和多智能体设计边界              | `-`                                   |
-| 2    | [DeepAgents 快速入门与流式解析](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/2-DeepAgents快速入门与流式解析)     | `create_deep_agent()`、`invoke`、`stream`、`chunk`            | `02-quickstart-streaming`             |
-| 3    | [子智能体进阶与异步执行](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/3-子智能体进阶与异步执行)                  | 字典式子智能体、助手调度、`astream` 和嵌套边界                | `03-deepagents-subagents-async`       |
-| 4    | [接入 LangGraph 与 LangChain](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/4-接入LangGraph与LangChain)           | `CompiledSubAgent`、LangGraph 子图、LangChain Agent 包装      | `04-deepagents-langgraph-langchain`   |
-| 5    | [人机协作与中断恢复](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/5-人机协作与中断恢复)                          | 人工审批、编辑工具参数、中断和恢复执行                        | `05-deepagents-hitl-interrupt`        |
-| 6    | [长期记忆与 Backend 存储](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/6-长期记忆与Backend存储)                  | `FilesystemBackend`、`StoreBackend`、`CompositeBackend`       | `06-deepagents-backends-memory`       |
-| 7    | [中间件机制与 Skills 配置](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/7-中间件机制与Skills配置)                | 上下文摘要、模型调用限制、工具调用限制、自定义中间件和 Skills | `07-deepagents-middleware-governance` |
-| 8    | [项目总览与工程初始化](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/8-项目总览与工程初始化)                      | 一主三从架构、9 个工具、前后端交互、工程目录                  | `09-deepsearch-core-config`           |
-| 9    | [基础模块与模型配置](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/9-基础模块与模型配置)                          | `.env`、`ContextVar`、`monitor`、路径工具、模型和提示词配置   | `09-deepsearch-core-config`           |
-| 10   | [网络搜索子智能体与 Tavily 工具](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/10-网络搜索子智能体与Tavily工具)   | `internet_search`、Tavily 配置、网络搜索助手组装和进度上报    | `10-deepsearch-network-subagent`      |
-| 11   | [数据库查询子智能体与 MySQL 工具](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/11-数据库查询子智能体与MySQL工具) | 本地 MySQL、查表、预览数据、执行 SQL、数据库助手组装          | `11-deepsearch-database-subagent`     |
-| 12   | [RAGFlow 子智能体与知识库准备](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/12-RAGFlow子智能体与知识库准备)      | RAGFlow 部署、助手列表查询、临时会话问答、知识库助手组装      | `12-deepsearch-ragflow-subagent`      |
-| 13   | [主智能体搭建与异步执行](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/13-主智能体搭建与异步执行)                 | 主智能体组装、上传文件读取、Markdown/PDF 工具、会话目录隔离   | `13-deepsearch-main-agent`            |
-| 14   | [FastAPI 接口与项目闭环](https://didilili.github.io/ai-agents-from-zero/#/实战项目-深度研搜/14-FastAPI接口与项目闭环)                  | 任务启动/取消、上传、文件列表、下载、WebSocket 和前端联调     | `14-deepsearch-api-websocket`         |
+1. `InMemorySaver` 重启后不保留聊天 checkpoint；磁盘 KB/索引与会话文件是另一类状态。
+2. 面向本地单进程 Demo，不是多节点生产部署；session 隔离不等于生产用户认证。
+3. 当前数据无跨月付款样本，跨月 `paid_at` 尚未真实 LLM 验证；保留 `blocked_preflight`，属于数据覆盖缺口。
+4. 最终 synthesis 仍可能生成缺少工具证据支持的派生指标，需要业务复核。
+5. 公开 Web 只能作为背景，不能自动解释内部业务变化或覆盖内部分类。
 
-可以用分支切换对照每一阶段的代码演进：
+这些是 Demo / Prototype 的工程边界。三源执行链路可以演示，不宣称生产级完全可靠。
 
-```bash
-git checkout 10-deepsearch-network-subagent
-git checkout main
-```
+## Repository & Freeze
 
-`main` 分支保留当前完整闭环版本。
+`app/` 为运行代码，`frontend/` 为界面，`scripts/` 为 Demo 准备与验证，`tests/` 为测试，`demo/ecommerce/` 保留说明、SOP 与验收历史，`docker/` 为 MySQL 配置。提交建议和截图来源见 [Project Freeze](docs/project-freeze.md)。密钥、缓存、临时观察脚本和会话产物不提交。
 
-## 🚧 能力边界
+## 项目来源
 
-「深度研搜」适合入门到进阶阶段学习多智能体工程主链路，但它不是一个完整企业级生产系统。当前版本重点覆盖 DeepAgents 多智能体调度、真实工具接入、文件交付、FastAPI 接口、WebSocket 实时推送和前后端联调。
-
-它没有刻意展开以下生产治理能力：
-
-- 用户登录、角色权限和多租户隔离；
-- 文件上传安全扫描和内容审核；
-- 任务队列、分布式执行和大规模并发治理；
-- 全量事件持久化、历史会话恢复和审计追踪；
-- 系统化评测集、自动化回归和 Agent 质量评估；
-- 生产监控、告警、链路追踪和灰度发布；
-- 复杂报告编辑、协同工作流和权限化文件管理。
-
-这些能力适合在主链路跑通之后继续扩展。本仓库先承担一个清晰角色：把 DeepAgents 多智能体项目最关键、最必要、最值得学习的工程骨架讲清楚、跑起来，并为后续企业级扩展打基础。
+本项目在原有 DeepAgents 教学工程基础上演进，保留来源：[didilili/deepsearch-agents](https://github.com/didilili/deepsearch-agents)。当前文档描述本工作区 Local RAG、电商 Demo 与验收状态，不能将原教学代码全部归为新增个人实现。

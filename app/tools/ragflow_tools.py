@@ -1,128 +1,301 @@
 """
-RAGFlow 知识库工具模块
-
-封装两个给 RAGFlow 子智能体使用的 LangChain 工具：
-get_assistant_list 用于发现可用聊天助手及其绑定知识库，
-create_ask_delete 用于创建临时会话、发起一次问题查询，并在查询后删除会话。
+RAGFlow 工具：通过 SDK 查询助手和临时 Session；配置在调用时校验。
+未配置 RAGFlow 不影响其他 Agent 模块导入。
 """
 
-import json
+import math
+from collections.abc import Mapping
+from urllib.parse import urlsplit
 
+import requests
 from langchain_core.tools import tool
 from ragflow_sdk import RAGFlow
 
 from app.api.monitor import monitor
 from app.ragflow.rag_config import _load_ragflow_env
 
-# 模块级复用 RAGFlow 客户端，避免每次工具调用都重新初始化 SDK 对象
-api_key, base_url = _load_ragflow_env()
-ragflow_client = RAGFlow(api_key=api_key, base_url=base_url)
+
+_REQUEST_TIMEOUT = (10, 30)  # 连接/读取超时（秒），不是任务总时限。
+_MAX_CITATIONS = 5
 
 
-# @tool 会把函数签名和 docstring 暴露给 DeepAgents，模型据此决定是否调用以及如何填参
+class _RAGFlowError(Exception):
+    """可安全返回的本地错误，不包含服务端原文或凭据。"""
+
+
+class _RAGFlowConfigError(_RAGFlowError):
+    pass
+
+
+class _RAGFlowClient(RAGFlow):
+    """保留 SDK Chat/Session 协议，仅补充本线路的 HTTP 传输包装。"""
+
+    def _request(self, method, path, **kwargs):
+        with requests.request(
+            method, self.api_url + path,
+            headers=self.authorization_header,
+            timeout=_REQUEST_TIMEOUT, **kwargs,
+        ) as response:
+            response.raise_for_status()
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise _RAGFlowError("服务返回无效 JSON。") from exc
+            if not isinstance(payload, dict) or "code" not in payload:
+                raise _RAGFlowError("服务响应缺少业务状态码。")
+            if payload["code"] != 0:
+                code = payload["code"]
+                detail = f"（code={code}）" if type(code) is int else ""
+                raise _RAGFlowError(f"服务返回业务错误{detail}。")
+            # 非流式响应已读入内存，关闭连接后 SDK 仍可 json()。
+            return response
+
+    def get(self, path, params=None, json=None):
+        return self._request("GET", path, params=params, json=json)
+
+    def post(self, path, json=None, stream=False, files=None):
+        if stream:
+            raise _RAGFlowError("当前工具仅支持非流式问答。")
+        return self._request("POST", path, json=json, stream=False, files=files)
+
+    def delete(self, path, json):
+        return self._request("DELETE", path, json=json)
+
+
+def _get_ragflow_client() -> RAGFlow:
+    """校验配置并延迟创建 Client，不缓存无效配置。"""
+    api_key, base_url = _load_ragflow_env()
+    if not isinstance(base_url, str) or not base_url.strip():
+        raise _RAGFlowConfigError("RAGFlow 未配置：缺少 RAGFLOW_API_URL。")
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise _RAGFlowConfigError("RAGFlow 未配置：缺少 RAGFLOW_API_KEY。")
+    base_url = base_url.strip().rstrip("/")
+    try:
+        parsed = urlsplit(base_url)
+        valid = (
+            parsed.scheme in {"http", "https"} and parsed.hostname
+            and not parsed.username and not parsed.password
+            and not parsed.query and not parsed.fragment
+            and not any(char.isspace() for char in base_url)
+        )
+        parsed.port  # 验证端口；不在错误中返回原始地址。
+    except ValueError:
+        valid = False
+    if not valid:
+        raise _RAGFlowConfigError(
+            "RAGFlow 配置错误：RAGFLOW_API_URL 必须是合法 HTTP/HTTPS 服务地址。"
+        )
+    if "\r" in api_key or "\n" in api_key:
+        raise _RAGFlowConfigError("RAGFlow 配置错误：RAGFLOW_API_KEY 格式无效。")
+    return _RAGFlowClient(api_key=api_key.strip(), base_url=base_url)
+
+
+def _error_detail(exc: Exception) -> str:
+    """不返回 SDK/Requests 异常原文，避免 URL、Key 或响应内容外泄。"""
+    if isinstance(exc, _RAGFlowError):
+        return str(exc)
+    if isinstance(exc, requests.Timeout):
+        return "请求超时。"
+    if isinstance(exc, requests.ConnectionError):
+        return "无法连接服务。"
+    if isinstance(exc, requests.HTTPError):
+        status = exc.response.status_code if exc.response is not None else None
+        return f"HTTP {status}。" if status is not None else "HTTP 请求失败。"
+    if isinstance(exc, requests.RequestException):
+        return "网络请求失败。"
+    return "SDK 调用或响应处理失败。"
+
+
+def _citation_value(chunk, *names):
+    """兼容 SDK 保留的字典 chunk 和对象 chunk；字段异常按缺失处理。"""
+    for name in names:
+        try:
+            value = chunk.get(name) if isinstance(chunk, Mapping) else getattr(chunk, name, None)
+        except Exception:
+            continue
+        if value is not None and value != "":
+            return value
+    return None
+
+
+def _citation_text(value, max_length=200):
+    """把来源标识压缩为单行，避免输出对象 repr 或无限增长的字段。"""
+    if not isinstance(value, (str, int, float)) or isinstance(value, bool):
+        return None
+    text = " ".join(str(value).split())
+    return text[:max_length] if text else None
+
+
+def _citation_score(chunk):
+    value = _citation_value(chunk, "score", "similarity")
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+        return float(value)
+    return None
+
+
+def _format_citations(reference) -> str:
+    """按 SDK 顺序输出至多五个唯一文档来源，不包含 chunk 正文或 metadata。"""
+    if reference is None:
+        return "RAGFlow 本次未返回可用文档引用。"
+    if isinstance(reference, Mapping):
+        chunks = reference.get("chunks")
+    elif isinstance(reference, (list, tuple)):
+        chunks = reference
+    else:
+        try:
+            chunks = getattr(reference, "chunks", None)
+        except Exception:
+            return "引用信息解析不完整。"
+    if not chunks:
+        return "RAGFlow 本次未返回可用文档引用。"
+    if not isinstance(chunks, (list, tuple)):
+        return "引用信息解析不完整。"
+
+    citations = []
+    citation_indexes = {}
+    incomplete_seen = False
+    for chunk in chunks:
+        document_name = _citation_text(_citation_value(chunk, "document_name", "doc_name"))
+        document_id = _citation_text(_citation_value(chunk, "document_id"))
+        dataset_id = _citation_text(_citation_value(chunk, "dataset_id"))
+        score = _citation_score(chunk)
+        if document_id:
+            key = ("document_id", document_id)
+        elif document_name:
+            key = ("document_name", document_name.casefold())
+        else:
+            if incomplete_seen:
+                continue
+            incomplete_seen = True
+            key = ("incomplete",)
+        citation = {
+            "document_name": document_name,
+            "document_id": document_id,
+            "dataset_id": dataset_id,
+            "score": score,
+        }
+        if key in citation_indexes:
+            index = citation_indexes[key]
+            previous_score = citations[index]["score"]
+            if score is not None and (previous_score is None or score > previous_score):
+                citations[index] = citation
+            continue
+        if len(citations) >= _MAX_CITATIONS:
+            continue
+        citation_indexes[key] = len(citations)
+        citations.append(citation)
+
+    if not citations:
+        return "引用信息解析不完整。"
+    lines = []
+    for index, citation in enumerate(citations, 1):
+        if citation["document_name"]:
+            lines.append(f"{index}. 文档：{citation['document_name']}")
+        elif citation["document_id"]:
+            lines.append(f"{index}. Document ID：{citation['document_id']}")
+        else:
+            lines.append(f"{index}. 来源信息不完整")
+        if citation["dataset_id"]:
+            lines.append(f"   Dataset ID：{citation['dataset_id']}")
+        if citation["score"] is not None:
+            lines.append(f"   相关度：{citation['score']:.6g}")
+    return "\n".join(lines)
+
+
+def _format_answer_with_citations(answer: str, reference) -> str:
+    return f"答案：\n{answer}\n\n来源：\n{_format_citations(reference)}"
+
+
 @tool
 def get_assistant_list() -> str:
     """
-    查询 RAGFlow 中有哪些聊天助手，以及每个助手关联了哪些知识库
+    查询 RAGFlow 助手，返回名称、Chat ID、描述及关联 Dataset ID。
 
-    作用：让模型先了解“哪个助手能回答哪类内部文档问题”，再决定后续要向哪个助手提问。
-    调用 create_ask_delete 之前，应先调用本工具确认助手名称。
-    :return: 有助手时返回助手名称、功能介绍、关联知识库；无助手或异常时返回中文提示
+    先通过此工具确认助手，再调用 create_ask_delete。
+    Dataset ID 是标识符，不等于知识库名称。
+    :return: 助手列表文本；无助手或失败时返回明确说明。
     """
-
-    # 埋点：工具被调用后，前端可以展示当前正在查询 RAGFlow 助手列表
-    monitor.report_tool(tool_name="ragflow聊天助手列表查询工具：get_assistant_list")
-
     try:
-        # list_chats 查询的是 RAGFlow 的 Chat 层，不是 Dataset 层
-        # Chat 负责对外问答，Dataset 只负责承载文档
-        chat_list = ragflow_client.list_chats()
-        if not chat_list:
+        client = _get_ragflow_client()
+        monitor.report_tool(tool_name="ragflow聊天助手列表查询工具：get_assistant_list")
+        chats = client.list_chats()
+        if not chats:
             return "没有任何可用助手"
-
-        # 把每个助手的名称、描述和绑定知识库拼成模型容易阅读的路由信息
-        count_chat_info = ""
-        for chat in chat_list:
-            # 不同版本 SDK 字段可能为空，这里用 getattr 兼容没有绑定知识库的助手
-            dataset_names = getattr(chat, "kb_names", []) or []
-
-            count_chat_info += f"助手名称:{chat.name};功能介绍：{chat.description}; 关联的知识库：{'、'.join(dataset_names)} \n"
-        return count_chat_info
-    except Exception as e:
-        return f"查询助手信息异常，无可用助手,异常信息:{str(e)}"
+        rows = []
+        for chat in chats:
+            dataset_ids = getattr(chat, "dataset_ids", None) or []
+            rows.append(
+                f"助手名称：{getattr(chat, 'name', None) or '未命名'}; "
+                f"Chat ID：{getattr(chat, 'id', None) or '未提供'}; "
+                f"描述：{getattr(chat, 'description', None) or '无描述'}; "
+                f"关联 Dataset ID：{', '.join(map(str, dataset_ids)) or '未提供'}"
+            )
+        return "\n".join(rows)
+    except _RAGFlowConfigError as exc:
+        return str(exc)
+    except Exception as exc:
+        return f"RAGFlow 助手列表查询失败：{_error_detail(exc)}"
 
 
 @tool
 def create_ask_delete(chat_name, question) -> str:
     """
-    向某个 RAGFlow 聊天助手创建临时会话并完成一次提问
+    向唯一匹配的 RAGFlow 助手创建临时 Session、提问，并尝试清理 Session。
 
-    注意：调用此工具之前，必须先调用 get_assistant_list，明确可用助手名称和助手能力边界。
-    :param chat_name: 助手名称，必须来自 get_assistant_list 返回结果
-    :param question: 本次提问的问题
-    :return: RAGFlow 返回的回答文本；异常时返回中文错误提示
+    调用前先通过 get_assistant_list 确认名称；同名多个助手时拒绝提问。
+    :param chat_name: 来自助手列表的名称。
+    :param question: 围绕用户需求的问题。
+    :return: 回答或失败说明；清理失败附加警告，不覆盖已取得的答案。
     """
-    # 埋点：记录目标助手和问题，便于前端展示当前知识库检索动作
-    monitor.report_tool(
-        tool_name="ragflow提问助手工具：create_ask_delete",
-        args={"chat_name": chat_name, "question": question},
-    )
-
+    session = None
+    use_chat = None
+    result = ""
+    reference = None
+    cleanup_warning = ""
     try:
-        # 先按名称找到 Chat 对象；真正提问时还需要在 Chat 下创建 Session
-        chats = ragflow_client.list_chats(name=chat_name)
-        use_chat = chats[0]
-
-        # 每次工具调用只创建一个临时会话，避免多轮上下文污染当前问题
-        session = use_chat.create_session(name="temp_session_ask")
-
-        # SDK 暂未直接封装当前流式接口，这里通过底层 post 调用 Chat completions API
-        response = ragflow_client.post(
-            f"/chats/{use_chat.id}/completions",
-            {
-                "messages": [{"role": "user", "content": question}],
-                "stream": True,
-                "session_id": session.id,
-            },
-            stream=True,
+        client = _get_ragflow_client()
+        monitor.report_tool(
+            tool_name="ragflow提问助手工具：create_ask_delete",
+            args={"chat_name": chat_name, "question": question},
         )
-        result = ""
-        for line in response.iter_lines(decode_unicode=True):
-            if not line:
-                continue
-
-            # RAGFlow 流式返回遵循 SSE 风格：每行以 data: 开头，[DONE] 表示结束
-            line = line.removeprefix("data:").strip()
-            if line == "[DONE]":
-                break
-            data = json.loads(line)
-            chunk_data = data.get("data")
-            if not isinstance(chunk_data, dict):
-                continue
-            answer = chunk_data.get("answer")
-            if answer:
-                # 部分流式片段会返回“截至当前的完整答案”，部分会返回增量内容
-                # 这里兼容两种情况，尽量避免重复拼接
-                if answer.startswith(result):
-                    result = answer
-                elif not result.startswith(answer):
-                    result += answer
-
-        # 临时会话只用于本次工具调用，查询结束后删除，避免 RAGFlow 页面堆积无用会话
-        use_chat.delete_sessions(ids=[session.id])
-        return result
-    except Exception as e:
-        return f"提问失败，错误原因：{str(e)}"
-
-
-# if __name__ == "__main__":
-#     # 本地调试入口：直接运行本文件可验证 RAGFlow API Key、服务地址和助手名称是否可用
-#     # print(get_assistant_list.invoke({}))
-#     print(
-#         create_ask_delete.invoke(
-#             {
-#                 "chat_name": "电商行业助手",
-#                 "question": "如果我是一个电商平台运营负责人，应该怎样制定 2026 年 AI 应用路线图？",
-#             }
-#         )
-#     )
+        chats = [
+            chat for chat in (client.list_chats(name=chat_name) or [])
+            if getattr(chat, "name", None) == chat_name
+        ]
+        if not chats:
+            return "RAGFlow 未找到指定助手。"
+        if len(chats) > 1:
+            return "存在多个同名助手，无法唯一确定目标。"
+        use_chat = chats[0]
+        session = use_chat.create_session(name="temp_session_ask")
+        if not getattr(session, "id", None):
+            raise _RAGFlowError("服务未返回有效 Session ID。")
+        # 0.25.2 的 ask 即使 stream=False 也返回生成器。
+        # 只取非流式完整回答，移除不可靠的 delta/cumulative 前缀拼接。
+        for message in session.ask(question=question, stream=False):
+            if not isinstance(message.content, str):
+                raise _RAGFlowError("服务返回的答案格式无效。")
+            result = message.content
+            reference = getattr(message, "reference", None)
+        if not result.strip():
+            result = "RAGFlow 未返回有效答案。"
+        else:
+            try:
+                result = _format_answer_with_citations(result, reference)
+            except Exception:
+                # 引用异常不影响已经取得的答案，也不暴露 traceback 或 SDK 对象。
+                result = f"答案：\n{result}\n\n来源：\n引用信息解析不完整。"
+    except _RAGFlowConfigError as exc:
+        result = str(exc)
+    except Exception as exc:
+        result = f"RAGFlow 提问失败：{_error_detail(exc)}"
+    finally:
+        if session is not None and use_chat is not None:
+            try:
+                session_id = getattr(session, "id", None)
+                if not session_id:
+                    raise _RAGFlowError("缺少 Session ID，无法安全指定清理目标。")
+                use_chat.delete_sessions(ids=[session_id])
+            except Exception as exc:
+                cleanup_warning = f"RAGFlow 临时会话清理失败：{_error_detail(exc)}"
+    return f"{result}\n{cleanup_warning}" if cleanup_warning else result

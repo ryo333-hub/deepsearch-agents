@@ -66,12 +66,12 @@ export function useDeepAgentSession() {
       return;
     }
 
-    const response = await listSessionFiles(sessionPath);
+    const response = await listSessionFiles(threadId);
     if (response.error) {
       throw new Error(response.error);
     }
     setFiles(response.files || []);
-  }, [sessionPath]);
+  }, [sessionPath, threadId]);
 
   useEffect(() => {
     let disposed = false;
@@ -193,7 +193,7 @@ export function useDeepAgentSession() {
   }, [isRunning, refreshFiles, sessionPath]);
 
   const submitTask = useCallback(
-    async (query: string) => {
+    async (query: string, knowledgeBaseId?: string) => {
       const cleanQuery = query.trim();
       if (!cleanQuery) {
         throw new Error("请输入研搜任务");
@@ -205,7 +205,7 @@ export function useDeepAgentSession() {
       setResult("");
       setLastError("");
       try {
-        const response = await startTask(cleanQuery, threadId);
+        const response = await startTask(cleanQuery, threadId, knowledgeBaseId);
         if (response.thread_id && response.thread_id !== threadId) {
           storeThreadId(response.thread_id);
           setThreadId(response.thread_id);

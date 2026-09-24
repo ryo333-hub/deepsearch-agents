@@ -10,7 +10,12 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from langchain_core.tools import tool
+from requests.exceptions import RequestException
 from tavily import TavilyClient
+from tavily.errors import (
+    BadRequestError, ForbiddenError, InvalidAPIKeyError,
+    TimeoutError as TavilyTimeoutError, UsageLimitExceededError,
+)
 
 from app.api.monitor import monitor
 
@@ -52,12 +57,33 @@ def internet_search(
     )
 
     # Tavily 返回 query、results、title、url、content 等结构化字段，后续由子智能体阅读并汇总
-    return tavily_client.search(
-        query=query,
-        topic=topic,
-        max_results=max_results,
-        include_raw_content=include_raw_content,
-    )
+    try:
+        result = tavily_client.search(
+            query=query,
+            topic=topic,
+            max_results=max_results,
+            include_raw_content=include_raw_content,
+        )
+    except (RequestException, TavilyTimeoutError, UsageLimitExceededError,
+            ForbiddenError, InvalidAPIKeyError, BadRequestError) as exc:
+        # Return a bounded failure, not exception text/headers that may contain
+        # credentials. The worker can stop and Main can retain other sources.
+        return {"results": [], "error": {
+            "type": type(exc).__name__,
+            "message": "公开信息来源当前不可用。请停止本次搜索，不要自动重试。",
+        }}
+    except ValueError:
+        # SDK response.json() can fail on malformed upstream responses.
+        return {"results": [], "error": {
+            "type": "InvalidResponse",
+            "message": "搜索服务返回了无法解析的响应，请停止本次搜索。",
+        }}
+    if not isinstance(result, dict) or not isinstance(result.get("results"), list):
+        return {"results": [], "error": {
+            "type": "InvalidResponse",
+            "message": "搜索服务返回结构异常，请停止本次搜索。",
+        }}
+    return result
 
 
 if __name__ == "__main__":

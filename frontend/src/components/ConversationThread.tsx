@@ -31,44 +31,28 @@ export interface ChatTurn {
 
 interface ConversationThreadProps {
   onUseExample: (prompt: string) => void;
+  threadId: string;
   turns: ChatTurn[];
 }
 
 const TASK_EXAMPLES = [
   {
-    tool: "网络搜索工具",
-    title: "联网趋势研判",
-    prompt:
-      "请使用网络搜索工具，检索 2026 年跨境电商 AI 客服趋势，列出 5 条关键变化，并附上来源链接。",
-    icon: <CloudServerOutlined aria-hidden />,
-  },
-  {
     tool: "数据库查询工具",
-    title: "药品库存排查",
-    prompt:
-      "请请使用数据库查询工具，查询库存大于 100 的药品，按库存量升序列出药品名称、批次号、仓库位置和过期日期。",
+    title: "销量与库存",
+    prompt: "分析 2026 年 8 月销量最高的商品和当前库存。",
     icon: <DatabaseOutlined aria-hidden />,
   },
   {
-    tool: "RAGFlow 知识库",
-    title: "内部文档问答",
-    prompt:
-      "请使用 RAGFlow 助手，查询公司内部白皮书中关于品类策略的内容，并整理成三条可执行建议。",
+    tool: "企业知识库",
+    title: "库存 SOP",
+    prompt: "根据公司的库存 SOP，低库存商品应该如何处理？",
     icon: <FileSearchOutlined aria-hidden />,
   },
   {
-    tool: "文件读取工具",
-    title: "上传文件分析",
-    prompt:
-      "请使用文件读取工具，读取我上传的文件，提炼核心观点、风险点和待补充信息，并给出下一步分析计划。",
-    icon: <FileTextOutlined aria-hidden />,
-  },
-  {
-    tool: "Markdown/PDF 工具",
-    title: "生成交付报告",
-    prompt:
-      "请使用 Markdown 文档生成工具和 Markdown 转 PDF 工具，基于本次调研结果生成一份 Markdown 报告，并转换成 PDF 保存到当前工作目录。",
-    icon: <FileMarkdownOutlined aria-hidden />,
+    tool: "三源综合",
+    title: "经营风险与建议",
+    prompt: "分析 2026 年 8 月销量最高商品及库存情况，根据内部库存 SOP 判断风险，并结合近期公开消费趋势给出建议，分别标明数据库依据、内部文档引用和公开来源链接。",
+    icon: <BranchesOutlined aria-hidden />,
   },
 ];
 
@@ -227,7 +211,7 @@ function ThinkingTimeline({ events }: { events: MonitorMessage[] }) {
   );
 }
 
-function ArtifactShelf({ files }: { files: OutputFile[] }) {
+function ArtifactShelf({ files, threadId }: { files: OutputFile[]; threadId: string }) {
   if (files.length === 0) {
     return (
       <div className="artifact-empty">
@@ -252,7 +236,7 @@ function ArtifactShelf({ files }: { files: OutputFile[] }) {
             <Button
               aria-label={`下载 ${file.name}`}
               className="artifact-download"
-              href={getDownloadUrl(file.path)}
+              href={getDownloadUrl(file.path, threadId)}
               icon={<DownloadOutlined />}
               shape="circle"
             />
@@ -295,8 +279,11 @@ function AssistantMessage({
   files,
   isRunning,
   result,
+  threadId,
   timestamp,
-}: Pick<ChatTurn, "events" | "files" | "isRunning" | "result" | "timestamp">) {
+}: Pick<ChatTurn, "events" | "files" | "isRunning" | "result" | "timestamp"> & {
+  threadId: string;
+}) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -365,7 +352,7 @@ function AssistantMessage({
             </span>
             <strong>{files.length}</strong>
           </summary>
-          <ArtifactShelf files={files} />
+          <ArtifactShelf files={files} threadId={threadId} />
         </details>
       </div>
     </article>
@@ -374,6 +361,7 @@ function AssistantMessage({
 
 export function ConversationThread({
   onUseExample,
+  threadId,
   turns,
 }: ConversationThreadProps) {
   if (turns.length === 0) {
@@ -430,6 +418,7 @@ export function ConversationThread({
             files={turn.files}
             isRunning={turn.isRunning}
             result={turn.result}
+            threadId={threadId}
             timestamp={turn.timestamp}
           />
         </div>

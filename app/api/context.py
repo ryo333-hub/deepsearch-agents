@@ -18,6 +18,11 @@ _thread_id_ctx: ContextVar[Optional[str]] = ContextVar(
     "thread_id",
     default=None,
 )
+_unset_knowledge_base = object()
+_selected_knowledge_base_ctx: ContextVar[str | None | object] = ContextVar(
+    "selected_knowledge_base_id",
+    default=_unset_knowledge_base,
+)
 
 
 def set_session_context(path: str) -> Token[Optional[str]]:
@@ -56,6 +61,34 @@ def get_thread_context() -> Optional[str]:
     :return: 当前任务 ID；未设置时返回 None
     """
     return _thread_id_ctx.get()
+
+
+def reset_thread_context(token: Token[Optional[str]]) -> None:
+    """Restore a temporary thread context used for session-scoped validation."""
+    _thread_id_ctx.reset(token)
+
+
+def set_selected_knowledge_base_context(
+    knowledge_base_id: str | None,
+) -> Token[str | None | object]:
+    """Pin the KB selected for this task; None means no KB was selected."""
+    return _selected_knowledge_base_ctx.set(knowledge_base_id)
+
+
+def get_selected_knowledge_base_context() -> str | None:
+    """Return the selected KB without exposing a session or filesystem path."""
+    value = _selected_knowledge_base_ctx.get()
+    return value if isinstance(value, str) else None
+
+
+def has_selected_knowledge_base_context() -> bool:
+    """Distinguish a Main task with no selection from standalone Tool usage."""
+    return _selected_knowledge_base_ctx.get() is not _unset_knowledge_base
+
+
+def reset_selected_knowledge_base_context(token: Token[str | None | object]) -> None:
+    """Prevent a completed task's KB selection from leaking to the next task."""
+    _selected_knowledge_base_ctx.reset(token)
 
 
 def reset_session_context(
